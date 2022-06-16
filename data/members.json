@@ -1,0 +1,34 @@
+[
+	{
+		"image": "",
+		"name": "yasin",
+		"email": "yasin@gis.id",
+		"role": "Officer",
+		"password": "1234",
+		"id": "TEK-6yNbxfmWL1foq2xIS"
+	},
+	{
+		"image": "",
+		"name": "anas",
+		"email": "anas@gis.id",
+		"role": "Admin",
+		"password": "1234",
+		"id": "tAquX3y0ddANEKXx8t4w3"
+	},
+	{
+		"image": "",
+		"name": "mubarak",
+		"email": "mubarak@gis.id",
+		"role": "Supervisor",
+		"password": "1234",
+		"id": "8bVFFDomaJH7iNAtSUsYm"
+	},
+	{
+		"image": "",
+		"name": "test",
+		"email": "test@example.com",
+		"role": "Common",
+		"password": "asdf",
+		"id": "qf3NiYiQWysmLZDaaoIq2"
+	}
+]

@@ -1,0 +1,36 @@
+{
+  "name": "gis",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "cypress open",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.9.0",
+    "@emotion/styled": "^11.8.1",
+    "@fontsource/roboto": "^4.5.7",
+    "@mui/icons-material": "^5.8.2",
+    "@mui/material": "^5.8.2",
+    "@reduxjs/toolkit": "^1.8.2",
+    "casbin": "^5.15.1",
+    "date-fns": "^2.28.0",
+    "formik": "^2.2.9",
+    "formik-mui": "^4.0.0-alpha.3",
+    "formik-mui-lab": "^1.0.0-alpha.3",
+    "next": "12.1.6",
+    "react": "18.1.0",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "react-dom": "18.1.0",
+    "react-redux": "^8.0.2"
+  },
+  "devDependencies": {
+    "cypress": "^10.0.3",
+    "eslint": "8.17.0",
+    "eslint-config-next": "12.1.6"
+  }
+}

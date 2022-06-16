@@ -1,0 +1,105 @@
+[
+	{
+		"id": "a",
+		"image": "/images/1655404575458.jpeg",
+		"name": "Pembangunan Jalan Raya",
+		"name_company": "Dinas Pekerjaan Umum",
+		"contract_number": 8090,
+		"contract_date": "Sun Jun 12 2022 19:53:22 GMT+0800 (Central Indonesia Time)",
+		"activity": "Membangun",
+		"obstacles": "Tidak Ada",
+		"status": "Pembangunan",
+		"progress": 10,
+		"fiscal_year": 2020,
+		"fund_source": "Pajak",
+		"link": "/admin/projects/Pembangunan Jalan",
+		"tasks": [
+			{
+				"id": "c",
+				"note": "Task 1",
+				"done": true
+			},
+			{
+				"id": "b",
+				"note": "Task 2",
+				"done": true
+			},
+			{
+				"id": 4,
+				"note": "Task 3",
+				"done": true
+			},
+			{
+				"id": "a",
+				"note": "Task 4",
+				"done": false
+			},
+			{
+				"id": 5,
+				"note": "Task 5",
+				"done": false
+			}
+		]
+	},
+	{
+		"id": "b",
+		"image": "/proto-512.v2.svg",
+		"name": "Perawatan Jalan",
+		"name_company": "Dinas Pekerjaan Umum",
+		"contract_number": 100,
+		"contract_date": "21/06/22",
+		"activity": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi sagittis, enim id finibus malesuada, urna tortor rhoncus quam, in mattis sapien ante et nibh. Praesent rutrum felis justo, in sodales quam porttitor nec. Aliquam erat volutpat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas pharetra quam et aliquam aliquam. Curabitur vitae posuere sem. Nam et sagittis sem, quis blandit ex.",
+		"obstacles": "Tidak Ada",
+		"status": "Perawatan",
+		"progress": 20,
+		"fiscal_year": "2021",
+		"fund_source": 1000,
+		"link": "/admin/projects/Perawatan Jalan"
+	},
+	{
+		"id": "c",
+		"image": "/proto-512.v2.svg",
+		"name": "Pembangunan Gedung Pemerintahan",
+		"name_company": "Dinas Pekerjaan Umum",
+		"contract_number": 100,
+		"contract_date": "21/06/22",
+		"activity": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi sagittis, enim id finibus malesuada, urna tortor rhoncus quam, in mattis sapien ante et nibh. Praesent rutrum felis justo, in sodales quam porttitor nec. Aliquam erat volutpat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas pharetra quam et aliquam aliquam. Curabitur vitae posuere sem. Nam et sagittis sem, quis blandit ex.",
+		"obstacles": "Tidak Ada",
+		"status": "Pembangunan",
+		"progress": 10,
+		"fiscal_year": "2021",
+		"fund_source": 1000,
+		"link": "/admin/projects/Pembangunan Gedung Pemerintahan"
+	},
+	{
+		"image": "/images/1655280520385.jpeg",
+		"name": "Pembangunan Gedung",
+		"name_company": "Dinas Pembangunan",
+		"contract_number": 749837029347,
+		"contract_date": "Thu Jun 30 2022 19:50:12 GMT+0800 (Central Indonesia Time)",
+		"activity": "membangun rangka",
+		"obstacles": "kurang dana",
+		"status": "Pembangunan",
+		"progress": 0,
+		"fiscal_year": 2022,
+		"fund_source": "Pemerintah",
+		"tasks": [
+			{
+				"id": 1,
+				"note": "beli bahan baku",
+				"done": true
+			},
+			{
+				"id": 3,
+				"note": "merancang",
+				"done": false
+			},
+			{
+				"id": 2,
+				"note": "rapat",
+				"done": false
+			}
+		],
+		"id": "jcwvk9lx1kOmJ13ogBESS"
+	}
+]

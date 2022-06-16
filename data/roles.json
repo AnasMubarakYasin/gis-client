@@ -1,0 +1,32 @@
+[
+  {
+    "id": "b",
+    "name": "Supervisor",
+    "index": "Supervisor",
+    "access": {}
+  },
+  {
+    "id": "d",
+    "name": "Common",
+    "index": "Common",
+    "access": {}
+  },
+  {
+    "id": "e",
+    "name": "Anonymous",
+    "index": "Anonymous",
+    "access": {}
+  },
+  {
+    "id": "c",
+    "name": "Officer",
+    "index": "Officer",
+    "access": {}
+  },
+  {
+    "id": "a",
+    "name": "Admin",
+    "index": "Admin",
+    "access": {}
+  }
+]

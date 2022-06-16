@@ -1,0 +1,47 @@
+[
+  {
+    "id": "a",
+    "image": "/proto-512.v2.svg",
+    "name": "Pembangunan Jalan",
+    "name_company": "Dinas Pekerjaan Umum",
+    "contract_number": 100,
+    "contract_date": "21/06/22",
+    "activity": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi sagittis, enim id finibus malesuada, urna tortor rhoncus quam, in mattis sapien ante et nibh. Praesent rutrum felis justo, in sodales quam porttitor nec. Aliquam erat volutpat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas pharetra quam et aliquam aliquam. Curabitur vitae posuere sem. Nam et sagittis sem, quis blandit ex.",
+    "obstacles": "Tidak Ada",
+    "status": "Pembangunan",
+    "progress": 20,
+    "fiscal_year": "2021",
+    "fund_source": 1000,
+    "link": "/admin/projects/Pembangunan Jalan"
+  },
+  {
+    "id": "b",
+    "image": "/proto-512.v2.svg",
+    "name": "Perawatan Jalan",
+    "name_company": "Dinas Pekerjaan Umum",
+    "contract_number": 100,
+    "contract_date": "21/06/22",
+    "activity": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi sagittis, enim id finibus malesuada, urna tortor rhoncus quam, in mattis sapien ante et nibh. Praesent rutrum felis justo, in sodales quam porttitor nec. Aliquam erat volutpat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas pharetra quam et aliquam aliquam. Curabitur vitae posuere sem. Nam et sagittis sem, quis blandit ex.",
+    "obstacles": "Tidak Ada",
+    "status": "Perawatan",
+    "progress": 20,
+    "fiscal_year": "2021",
+    "fund_source": 1000,
+    "link": "/admin/projects/Perawatan Jalan"
+  },
+  {
+    "id": "c",
+    "image": "/proto-512.v2.svg",
+    "name": "Pembangunan Gedung Pemerintahan",
+    "name_company": "Dinas Pekerjaan Umum",
+    "contract_number": 100,
+    "contract_date": "21/06/22",
+    "activity": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi sagittis, enim id finibus malesuada, urna tortor rhoncus quam, in mattis sapien ante et nibh. Praesent rutrum felis justo, in sodales quam porttitor nec. Aliquam erat volutpat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas pharetra quam et aliquam aliquam. Curabitur vitae posuere sem. Nam et sagittis sem, quis blandit ex.",
+    "obstacles": "Tidak Ada",
+    "status": "Pembangunan",
+    "progress": 10,
+    "fiscal_year": "2021",
+    "fund_source": 1000,
+    "link": "/admin/projects/Pembangunan Gedung Pemerintahan"
+  }
+]
