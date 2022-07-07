@@ -1,9 +1,8 @@
-import Link from "next/link";
-
 import { useState, useEffect, useContext, useMemo } from "react";
 import { styled, useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 import Box from "@mui/material/Box";
 import Backdrop from "@mui/material/Backdrop";
@@ -14,8 +13,8 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Avatar from "@mui/material/Avatar";
-import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Divider from "@mui/material/Divider";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -51,8 +50,6 @@ const drawerWidth = 240;
 const drawerNavigation = [
   { text: "Dashboard", icon: <DashboardIcon />, link: "/admin" },
   { text: "Projects", icon: <GridViewRoundedIcon />, link: "/admin/projects" },
-  // { text: 'Task', icon: (<AssignmentIcon />), link: "/admin/task" },
-  // { text: 'Attendance', icon: (<AssignmentIcon />), link: "/admin/task" },
   { text: "Team", icon: <PersonIcon />, link: "/admin/team" },
   { text: "Roles", icon: <WorkspacesIcon />, link: "/admin/roles" },
   { text: "Members", icon: <GroupIcon />, link: "/admin/members" },
@@ -127,6 +124,26 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   justifyContent: "center",
 }));
 
+/**
+ * @namespace Layout
+ */
+/**
+ * @typedef {Object} Layout.Admin
+ * @property {string} title
+ * @property {{
+ *  show: boolean,
+ *  backdrop: boolean,
+ *  variant: "indeterminate",
+ *  progress: number,
+ * }} title
+ * @property {{name: string; role: string;}} user
+ * @property {{text: string; icon: any; link: string}[]} navigations
+ * @property {Function} [onLogout]
+ */
+/**
+ * @param {Layout.Admin} props
+ * @returns
+ */
 export default function Admin(props) {
   const appName = process.env.NEXT_PUBLIC_WEB_NAME;
   const router = useRouter();
@@ -190,7 +207,7 @@ export default function Admin(props) {
               {openDrawer ? <MenuOpenIcon /> : <MenuIcon />}
             </IconButton>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              {props.pageTitle}
+              {props.title}
             </Typography>
             <div>
               <Tooltip title={`Theme Mode ${theme.palette.mode}`}>
@@ -266,18 +283,38 @@ export default function Admin(props) {
                 }}
               >
                 <MenuItem>
-                  <Avatar /> Profile
+                  <ListItemIcon>
+                    <Avatar />
+                  </ListItemIcon>
+                  <ListItemText>
+                    <Typography
+                      component="div"
+                      variant="body1"
+                      fontWeight={theme.typography.fontWeightMedium}
+                    >
+                      {props.user.name}
+                    </Typography>
+                    <Typography component="div" variant="body2">
+                      {props.user.role}
+                    </Typography>
+                  </ListItemText>
                 </MenuItem>
                 {/* <MenuItem>
                   <Avatar /> My account
                 </MenuItem> */}
                 <Divider />
-                {menuSecondary.map((item) => (
-                  <MenuItem key={item.text}>
-                    <ListItemIcon>{item.icon}</ListItemIcon>
-                    <ListItemText primary={item.text} />
-                  </MenuItem>
-                ))}
+                <MenuItem key={"Setting"}>
+                  <ListItemIcon>
+                    <SettingsIcon></SettingsIcon>
+                  </ListItemIcon>
+                  <ListItemText primary={"Setting"} />
+                </MenuItem>
+                <MenuItem key={"Logout"} onClick={props.onLogout}>
+                  <ListItemIcon>
+                    <LogoutIcon></LogoutIcon>
+                  </ListItemIcon>
+                  <ListItemText primary={"Logout"} />
+                </MenuItem>
 
                 {/* <MenuItem>
                   <ListItemIcon>
@@ -320,10 +357,10 @@ export default function Admin(props) {
           </DrawerHeader>
           <Divider />
           <List>
-            {drawerNavigation.map(({ text, icon, link }, index) => (
+            {props.navigations.map(({ text, icon, link }, index) => (
               <ListItem key={text} disablePadding>
                 <Link style={{ all: "inherit" }} href={link}>
-                  <ListItemButton selected={props.pageTitle === text}>
+                  <ListItemButton selected={props.title === text}>
                     <ListItemIcon>{icon}</ListItemIcon>
                     <ListItemText primary={text} />
                   </ListItemButton>
@@ -365,7 +402,7 @@ export default function Admin(props) {
                   open={loaderProgress.backdrop}
                   sx={{
                     color: "#fff",
-                    backgroundColor: "rgba(0, 0, 0, 0.15)",
+                    backgroundColor: "rgba(0, 0, 0, 0.2)",
                     zIndex: "1500",
                   }}
                 ></Backdrop>

@@ -3,67 +3,108 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const membersApi = createApi({
   reducerPath: "membersApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `/api/members`,
+    baseUrl: `/api/v1/members`,
   }),
   endpoints: (builder) => ({
     getById: builder.query({
       keepUnusedDataFor: 1,
-      query: ({ id }) => ({ url: `${id}` }),
-      transformResponse: (response, meta, arg) => response.data,
+      query: ({ id, token }) => ({
+        url: `/${id}`,
+        headers: { authorization: `Bearer ${token}` },
+      }),
     }),
     getAll: builder.query({
       keepUnusedDataFor: 1,
-      query: () => ({ url: "" }),
-      transformResponse: (response, meta, arg) => response.data,
+      query: ({ token }) => ({
+        url: "",
+        headers: { authorization: `Bearer ${token}` },
+      }),
     }),
 
     create: builder.mutation({
-      query: ({ data }) => ({
+      query: ({ data, token }) => ({
         url: "",
+        method: "POST",
+        headers: { authorization: `Bearer ${token}` },
+        body: data,
+      }),
+    }),
+    signin: builder.mutation({
+      query: ({ data }) => ({
+        url: "/signin",
         method: "POST",
         body: data,
       }),
-      transformResponse: (response, meta, arg) => response.data,
+    }),
+
+    auth: builder.query({
+      keepUnusedDataFor: 1,
+      async queryFn({ token }, queryApi, extraOptions, baseQuery) {
+        if (!token) {
+          return {
+            error: {
+              error: "token not exists",
+              status: "CUSTOM_ERROR",
+              data: { message: "token not exists", code: 401 },
+            },
+          };
+        }
+        const res = await baseQuery({
+          url: "/auth",
+          method: "GET",
+          headers: { authorization: `Bearer ${token}` },
+        });
+        return res;
+      },
+    }),
+    permission: builder.mutation({
+      query: ({ access }) => ({
+        url: "/permission",
+        method: "POST",
+        body: access,
+      }),
     }),
     undo: builder.mutation({
-      query: ({ list }) => ({
+      query: ({ list, token }) => ({
         url: "",
         method: "PUT",
+        headers: { authorization: `Bearer ${token}` },
         body: list,
       }),
-      transformResponse: (response, meta, arg) => response.data,
     }),
 
     updateById: builder.mutation({
-      query: ({ id, data }) => ({
-        url: id,
+      query: ({ id, data, token }) => ({
+        url: `/${id}`,
         method: "PATCH",
+        headers: { authorization: `Bearer ${token}` },
         body: data,
       }),
-      transformResponse: (response, meta, arg) => response.data,
     }),
-
     removeById: builder.mutation({
-      query: ({ id }) => ({
-        url: id,
+      query: ({ id, token }) => ({
+        url: `/${id}`,
         method: "DELETE",
+        headers: { authorization: `Bearer ${token}` },
       }),
-      transformResponse: (response, meta, arg) => response.data,
     }),
     removeMany: builder.mutation({
-      query: ({ ids }) => ({
+      query: ({ ids, token }) => ({
         url: "",
         method: "DELETE",
+        headers: { authorization: `Bearer ${token}` },
         body: ids,
       }),
-      transformResponse: (response, meta, arg) => response.data,
     }),
   }),
 });
 
 export const {
   useCreateMutation,
+  useSigninMutation,
   useUndoMutation,
+  useAuthQuery,
+  usePermissionMutation,
 
   useGetAllQuery,
   useRemoveManyMutation,

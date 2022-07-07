@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTheme } from "@mui/material/styles";
+import { Formik, Form, Field } from "formik";
 import Link from "next/link";
 
 import Box from "@mui/material/Box";
@@ -8,6 +9,7 @@ import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
+import MUILink from "@mui/material/Link";
 
 // import Input from '@mui/material/Input';
 // import FilledInput from '@mui/material/FilledInput';
@@ -25,6 +27,11 @@ import LayoutPage from "@/layout/Page";
 function PageSignup(props) {
   const theme = useTheme();
   const [values, setValues] = useState({
+    username: "",
+    role: "",
+    password: "",
+  });
+  const [password, setPassword] = useState({
     amount: "",
     password: "",
     weight: "",
@@ -138,9 +145,12 @@ function PageSignup(props) {
                 textAlign="right"
                 marginTop=".5rem"
               >
-                <Link href="forgot">
+                <MUILink href="forgot" underline="hover">
+                  Forgot Password?
+                </MUILink>
+                {/* <Link href="forgot">
                   <a>Forgot Password?</a>
-                </Link>
+                </Link> */}
               </Typography>
             </FormControl>
           </Box>
@@ -155,9 +165,12 @@ function PageSignup(props) {
             </Button>
             <Typography variant="body2" textAlign="center">
               Already have an account?{" "}
-              <Link href="signin">
-                <a>Login</a>
-              </Link>
+              <MUILink href="signin" underline="hover">
+                Login
+              </MUILink>
+              {/* <Link href="signin">
+                  <a>Login</a>
+              </Link> */}
             </Typography>
           </Box>
         </Paper>

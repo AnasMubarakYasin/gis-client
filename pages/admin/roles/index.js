@@ -1,5 +1,6 @@
 import Admin from "@/layout/Admin";
 import Page from "@/layout/Page";
+import Authenticate from "@/layout/Authenticate";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
@@ -376,124 +377,125 @@ export default function Roles(props) {
   }, [isUndoingSuccess, isUndoingError]);
 
   return (
-    <Page>
-      <Admin
-        pageTitle="Roles"
-        loaderProgress={{
-          // show: showLoader,
+    <Authenticate
+      PageProps={{}}
+      AdminProps={{
+        title: "Roles",
+        loaderProgress: {
           show:
             isFetching || isCreating || isUpdating || isRemoving || isUndoing,
+        },
+      }}
+    >
+      <Box
+        display="grid"
+        padding={{
+          mobile: "16px",
+          tablet: "32px",
+        }}
+        gap={{
+          mobile: "16px",
+          tablet: "32px",
         }}
       >
         <Box
-          display="grid"
-          padding={{
-            mobile: "16px",
-            tablet: "32px",
-          }}
+          display="flex"
           gap={{
             mobile: "16px",
             tablet: "32px",
           }}
         >
-          <Box
-            display="flex"
-            gap={{
-              mobile: "16px",
-              tablet: "32px",
-            }}
-          >
+          <Paper elevation={0}>
+            <ToggleButtonGroup
+              value={buttonToggleGroup}
+              onChange={handleButtonToggleGroup}
+              aria-label="Operation Controll"
+            >
+              <ToggleButton value="Add" aria-label="Add role">
+                <Tooltip title="Add role">
+                  <AddIcon />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="Remove" aria-label="Remove role">
+                <Tooltip title="Remove role">
+                  <RemoveIcon />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="Search" aria-label="Search">
+                <Tooltip title="Search">
+                  <SearchIcon />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="more" aria-label="More Options">
+                <Tooltip title="More Options">
+                  <MoreVertIcon />
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Paper>
+          {removeMode && (
             <Paper elevation={0}>
-              <ToggleButtonGroup
-                value={buttonToggleGroup}
-                onChange={handleButtonToggleGroup}
-                aria-label="Operation Controll"
-              >
-                <ToggleButton value="Add" aria-label="Add role">
-                  <Tooltip title="Add role">
-                    <AddIcon />
+              <ToggleButtonGroup aria-label="Remove Operation Confirm">
+                <ToggleButton
+                  value="Done"
+                  aria-label="Done Remove"
+                  onClick={handleRemoveDone}
+                >
+                  <Tooltip title="Done Remove">
+                    <DoneIcon />
                   </Tooltip>
                 </ToggleButton>
-                <ToggleButton value="Remove" aria-label="Remove role">
-                  <Tooltip title="Remove role">
-                    <RemoveIcon />
-                  </Tooltip>
-                </ToggleButton>
-                <ToggleButton value="Search" aria-label="Search">
-                  <Tooltip title="Search">
-                    <SearchIcon />
-                  </Tooltip>
-                </ToggleButton>
-                <ToggleButton value="more" aria-label="More Options">
-                  <Tooltip title="More Options">
-                    <MoreVertIcon />
+                <ToggleButton
+                  value="Clear"
+                  aria-label="Clear Remove"
+                  onClick={handleRemoveCancel}
+                >
+                  <Tooltip title="Clear Remove">
+                    <ClearIcon />
                   </Tooltip>
                 </ToggleButton>
               </ToggleButtonGroup>
             </Paper>
-            {removeMode && (
-              <Paper elevation={0}>
-                <ToggleButtonGroup aria-label="Remove Operation Confirm">
-                  <ToggleButton
-                    value="Done"
-                    aria-label="Done Remove"
-                    onClick={handleRemoveDone}
-                  >
-                    <Tooltip title="Done Remove">
-                      <DoneIcon />
-                    </Tooltip>
-                  </ToggleButton>
-                  <ToggleButton
-                    value="Clear"
-                    aria-label="Clear Remove"
-                    onClick={handleRemoveCancel}
-                  >
-                    <Tooltip title="Clear Remove">
-                      <ClearIcon />
-                    </Tooltip>
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </Paper>
-            )}
-          </Box>
-          <Grid
-            container
-            spacing={{ xs: 2, sm: 2, md: 4, lg: 4, xl: 8 }}
-            columns={{ xs: 1, sm: 4, md: 4, lg: 6, xl: 8 }}
-          >
-            {roles.map((role, index) => (
-              <Grid item xs={1} sm={2} md={2} lg={2} xl={2} key={index}>
-                <Card
-                  variant="outlined"
-                  sx={{ opacity: isFetching ? ".7" : "1s" }}
+          )}
+        </Box>
+        <Grid
+          container
+          spacing={{ xs: 2, sm: 2, md: 4, lg: 4, xl: 8 }}
+          columns={{ xs: 1, sm: 4, md: 4, lg: 6, xl: 8 }}
+        >
+          {roles.map((role, index) => (
+            <Grid item xs={1} sm={2} md={2} lg={2} xl={2} key={index}>
+              <Card
+                variant="outlined"
+                sx={{ opacity: isFetching ? ".7" : "1s" }}
+              >
+                <CardActionArea
+                  disabled={isFetching}
+                  onClick={handleCardClick(index)}
                 >
-                  <CardActionArea
-                    disabled={isFetching}
-                    onClick={handleCardClick(index)}
+                  <Box
+                    display="grid"
+                    sx={{
+                      position: "relative",
+                      padding: {
+                        xs: theme.spacing(2),
+                        sm: theme.spacing(2),
+                        md: theme.spacing(4),
+                        lg: theme.spacing(4),
+                        xl: theme.spacing(8),
+                      },
+                      placeItems: "center",
+                      gap: theme.spacing(2),
+                    }}
                   >
-                    <Box
-                      display="grid"
-                      sx={{
-                        position: "relative",
-                        padding: {
-                          xs: theme.spacing(2),
-                          sm: theme.spacing(2),
-                          md: theme.spacing(4),
-                          lg: theme.spacing(4),
-                          xl: theme.spacing(8),
-                        },
-                        placeItems: "center",
-                        gap: theme.spacing(2),
-                      }}
-                    >
-                      {removeMode && (
-                        <Checkbox
-                          checked={removeList.includes(index)}
-                          sx={{ position: "absolute", right: 0, top: 0 }}
-                          onChange={handleRemoveSelection(index)}
-                        />
-                      )}
-                      {/* {isLoading ? (
+                    {removeMode && (
+                      <Checkbox
+                        checked={removeList.includes(index)}
+                        sx={{ position: "absolute", right: 0, top: 0 }}
+                        onChange={handleRemoveSelection(index)}
+                      />
+                    )}
+                    {/* {isLoading ? (
                         <Skeleton animation="wave" variant="circular">
                           <Avatar
                             // alt={role.name}
@@ -508,53 +510,52 @@ export default function Roles(props) {
                           sx={{ width: "86px", height: "86px" }}
                         ></Avatar>
                       )} */}
-                      <Box display="grid" sx={{ placeItems: "center" }}>
-                        {isLoading ? (
-                          <>
-                            <Skeleton
-                              animation="wave"
-                              variant="text"
-                              width="100%"
-                            >
-                              <Typography
-                                variant="h6"
-                                fontWeight={theme.typography.fontWeightMedium}
-                              >
-                                {".".repeat(10)}
-                              </Typography>
-                            </Skeleton>
-                            <Skeleton
-                              animation="wave"
-                              variant="text"
-                              width="100%"
-                            >
-                              <Typography variant="subtitle1">
-                                {".".repeat(22)}
-                              </Typography>
-                            </Skeleton>
-                          </>
-                        ) : (
-                          <>
+                    <Box display="grid" sx={{ placeItems: "center" }}>
+                      {isLoading ? (
+                        <>
+                          <Skeleton
+                            animation="wave"
+                            variant="text"
+                            width="100%"
+                          >
                             <Typography
                               variant="h6"
                               fontWeight={theme.typography.fontWeightMedium}
                             >
-                              {role.name}
+                              {".".repeat(10)}
                             </Typography>
-                            {/* <Typography variant="subtitle1">
+                          </Skeleton>
+                          <Skeleton
+                            animation="wave"
+                            variant="text"
+                            width="100%"
+                          >
+                            <Typography variant="subtitle1">
+                              {".".repeat(22)}
+                            </Typography>
+                          </Skeleton>
+                        </>
+                      ) : (
+                        <>
+                          <Typography
+                            variant="h6"
+                            fontWeight={theme.typography.fontWeightMedium}
+                          >
+                            {role.name}
+                          </Typography>
+                          {/* <Typography variant="subtitle1">
                               {role.role}
                             </Typography> */}
-                          </>
-                        )}
-                      </Box>
+                        </>
+                      )}
                     </Box>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      </Admin>
+                  </Box>
+                </CardActionArea>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
       <Dialog
         fullWidth
         maxWidth="sm"
@@ -719,6 +720,6 @@ export default function Roles(props) {
       >
         {snack.message}
       </Snackbar>
-    </Page>
+    </Authenticate>
   );
 }

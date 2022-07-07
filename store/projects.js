@@ -5,71 +5,107 @@ export const projectsApi = createApi({
   // refetchOnReconnect: true,
   // refetchOnMountOrArgChange: true,
   baseQuery: fetchBaseQuery({
-    baseUrl: `/api/projects`,
+    baseUrl: `/api/v1/projects`,
   }),
   // tagTypes: ["All", "Name", "Patch/id"],
   endpoints: (builder) => ({
     getAll: builder.query({
-      keepUnusedDataFor: 1,
-      query: () => ({}),
-      transformResponse: (response, meta, arg) => response.data,
+      keepUnusedDataFor: 0,
+      query: ({ token }) => ({
+        url: "",
+        headers: { authorization: `Bearer ${token}` },
+      }),
       // providesTags: (result, error) => [{ type: "All" }],
     }),
     getByName: builder.query({
-      keepUnusedDataFor: 1,
-      query: (name) => ({ url: `name/${name}` }),
-      transformResponse: (response, meta, arg) => response.data,
+      keepUnusedDataFor: 0,
+      query: ({ name, token }) => ({
+        url: `name/${name}`,
+        headers: { authorization: `Bearer ${token}` },
+      }),
       // providesTags: (result, error, name) => [{ type: "Name", name }],
     }),
     getByNameWithTasks: builder.query({
-      query: ({ name }) => ({ url: `name/${name}?with=tasks` }),
-      keepUnusedDataFor: 1,
-      transformResponse: (response, meta, arg) => response.data,
+      async queryFn({ name, token }, queryApi, extraOptions, baseQuery) {
+        if (!name) {
+          return {
+            error: {
+              error: "project not found",
+              status: "CUSTOM_ERROR",
+              data: { message: "project not found", code: 401 },
+            },
+          };
+        }
+        const res = await baseQuery({
+          url: `name/${name}?with=tasks`,
+          headers: { authorization: `Bearer ${token}` },
+        });
+        return res.data ? { data: res.data } : { error: res.error };
+      },
+      // query: ({ name, token }) => ({
+      //   url: `name/${name}?with=tasks`,
+      //   headers: { authorization: `Bearer ${token}` },
+      // }),
+      keepUnusedDataFor: 0,
       // providesTags: (result, error, name) => [{ type: "Name", name }],
     }),
     create: builder.mutation({
-      async queryFn({ data, file }, queryApi, extraOptions, baseQuery) {
+      async queryFn({ data, file, token }, queryApi, extraOptions, baseQuery) {
         const res_img = await baseQuery({
           url: `image`,
           method: "POST",
+          headers: { authorization: `Bearer ${token}` },
           body: file,
         });
-        data.image = res_img.data.data;
+        if (res_img.error) {
+          return { error: res_img.error };
+        }
+        data.image = res_img.data;
         const res = await baseQuery({
+          url: "",
           method: "POST",
+          headers: { authorization: `Bearer ${token}` },
           body: data,
         });
         return res.data ? { data: res.data } : { error: res.error };
       },
-      transformResponse: (response, meta, arg) => response.data,
       // invalidatesTags: ["Patch/id"],
     }),
     updateById: builder.mutation({
-      async queryFn({ id, data, file }, queryApi, extraOptions, baseQuery) {
+      async queryFn(
+        { id, data, file, token },
+        queryApi,
+        extraOptions,
+        baseQuery
+      ) {
         if (file) {
           const res_img = await baseQuery({
             url: `image`,
             method: "POST",
+            headers: { authorization: `Bearer ${token}` },
             body: file,
           });
-          data.image = res_img.data.data;
+          if (res_img.error) {
+            return { error: res_img.error };
+          }
+          data.image = res_img.data;
         }
         const res = await baseQuery({
-          url: id,
+          url: `/${id}`,
           method: "PATCH",
+          headers: { authorization: `Bearer ${token}` },
           body: data,
         });
         return res.data ? { data: res.data } : { error: res.error };
       },
-      transformResponse: (response, meta, arg) => response.data,
       // invalidatesTags: ["Patch/id"],
     }),
     deleteById: builder.mutation({
-      query: ({ id }) => ({
-        url: id,
+      query: ({ id, token }) => ({
+        url: `/${id}`,
         method: "DELETE",
+        headers: { authorization: `Bearer ${token}` },
       }),
-      transformResponse: (response, meta, arg) => response.data,
     }),
   }),
 });
