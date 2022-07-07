@@ -1,7 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 
-import team from "@/store/team";
 import user from "@/store/user";
 import { projectsApi } from "@/store/projects";
 import { tasksApi } from "@/store/tasks";
@@ -10,7 +9,6 @@ import { rolesApi } from "@/store/roles";
 
 const store = configureStore({
   reducer: {
-    team,
     user,
     [projectsApi.reducerPath]: projectsApi.reducer,
     [tasksApi.reducerPath]: tasksApi.reducer,
