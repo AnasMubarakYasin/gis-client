@@ -15,7 +15,7 @@ export const tasksApi = createApi({
     }),
     create: builder.mutation({
       query: ({ data, token }) => ({
-        url: "",
+        url: "/create",
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
         body: data,

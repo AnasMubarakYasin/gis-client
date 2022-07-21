@@ -203,6 +203,7 @@ export default function Admin(props) {
   useEffect(() => {
     router.events.on("routeChangeStart", handleRouteChangeStart);
     router.events.on("routeChangeComplete", handleRouteChangeComplete);
+
     // return () => {
     //   router.events.off("routeChangeStart", handleRouteChangeStart);
     //   router.events.off("routeChangeComplete", handleRouteChangeComplete);
@@ -277,7 +278,14 @@ export default function Admin(props) {
                     onClick={handleMenu}
                     color="inherit"
                   >
-                    <AccountCircle />
+                    {user.account.image ? (
+                      <Avatar
+                        src={user.account.image}
+                        alt={user.account.username}
+                      ></Avatar>
+                    ) : (
+                      <AccountCircle />
+                    )}
                   </IconButton>
                 </Tooltip>
                 <Menu
@@ -326,7 +334,7 @@ export default function Admin(props) {
                         variant="body1"
                         fontWeight={theme.typography.fontWeightMedium}
                       >
-                        {user.account.name}
+                        {user.account.username}
                       </Typography>
                       <Typography component="div" variant="body2">
                         {user.account.role}

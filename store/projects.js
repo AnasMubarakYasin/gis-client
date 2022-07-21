@@ -11,9 +11,9 @@ export const projectsApi = createApi({
   endpoints: (builder) => ({
     getAll: builder.query({
       keepUnusedDataFor: 0,
-      query: ({ token }) => ({
+      query: (/* { token } */) => ({
         url: "",
-        headers: { authorization: `Bearer ${token}` },
+        // headers: { authorization: `Bearer ${token}` },
       }),
       // providesTags: (result, error) => [{ type: "All" }],
     }),
@@ -52,7 +52,7 @@ export const projectsApi = createApi({
     create: builder.mutation({
       async queryFn({ data, file, token }, queryApi, extraOptions, baseQuery) {
         const res_img = await baseQuery({
-          url: `image`,
+          url: `/image`,
           method: "POST",
           headers: { authorization: `Bearer ${token}` },
           body: file,
@@ -62,7 +62,7 @@ export const projectsApi = createApi({
         }
         data.image = res_img.data;
         const res = await baseQuery({
-          url: "",
+          url: "/create",
           method: "POST",
           headers: { authorization: `Bearer ${token}` },
           body: data,
@@ -80,7 +80,7 @@ export const projectsApi = createApi({
       ) {
         if (file) {
           const res_img = await baseQuery({
-            url: `image`,
+            url: `/image`,
             method: "POST",
             headers: { authorization: `Bearer ${token}` },
             body: file,

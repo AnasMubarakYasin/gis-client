@@ -6,6 +6,7 @@ import { projectsApi } from "@/store/projects";
 import { tasksApi } from "@/store/tasks";
 import { membersApi } from "@/store/members";
 import { rolesApi } from "@/store/roles";
+import { supervisorsApi } from "@/store/supervisors";
 
 const store = configureStore({
   reducer: {
@@ -14,13 +15,15 @@ const store = configureStore({
     [tasksApi.reducerPath]: tasksApi.reducer,
     [membersApi.reducerPath]: membersApi.reducer,
     [rolesApi.reducerPath]: rolesApi.reducer,
+    [supervisorsApi.reducerPath]: supervisorsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       projectsApi.middleware,
       tasksApi.middleware,
       membersApi.middleware,
-      rolesApi.middleware
+      rolesApi.middleware,
+      supervisorsApi.middleware
     ),
 });
 

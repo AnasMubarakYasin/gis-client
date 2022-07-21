@@ -97,11 +97,11 @@ export default function Authenticate(props) {
         <DialogPassword
           open={openDialogPass}
           onSubmit={({ name, password }) => {
-            signin({ data: { name, password } });
+            signin({ data: { username: name, password } });
           }}
           onClose={() => setOpenDialogPass(false)}
           // @ts-ignore
-          values={{ name: user.account.name, password: "" }}
+          values={{ name: user.account.username, password: "" }}
           // @ts-ignore
           errors={isErrorSignin ? { password: errorSignin.data.message } : {}}
         ></DialogPassword>
@@ -118,11 +118,11 @@ export default function Authenticate(props) {
           <DialogPassword
             open={openDialogPass}
             onSubmit={({ name, password }) => {
-              signin({ data: { name, password } });
+              signin({ data: { username: name, password } });
             }}
             onClose={() => setOpenDialogPass(false)}
             // @ts-ignore
-            values={{ name: user.account.name, password: "" }}
+            values={{ name: user.account.username, password: "" }}
             // @ts-ignore
             errors={isErrorSignin ? { password: errorSignin.data.message } : {}}
           ></DialogPassword>

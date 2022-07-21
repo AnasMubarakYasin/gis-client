@@ -41,8 +41,8 @@ export default function FormDialog(props) {
     weightRange: "",
     show: false,
   });
-  const [values, setValues] = useState({ name: "", password: "" });
-  const [errors, setErrors] = useState({ name: "", password: "" });
+  const [values, setValues] = useState({ username: "", password: "" });
+  const [errors, setErrors] = useState({ username: "", password: "" });
 
   useEffect(() => {
     setOpen(props.open);

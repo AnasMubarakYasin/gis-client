@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useRouter } from "next/router";
 import { styled, useTheme, useMediaQuery } from "@mui/material";
-import { Formik, Form, Field } from "formik";
+import { useFormikContext, Formik, Form, Field } from "formik";
 import { TextField as FormikTextField } from "formik-mui";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -17,9 +17,12 @@ import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import Checkbox from "@mui/material/Checkbox";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import Input from "@mui/material/Input";
+import OutlinedInput from "@mui/material/OutlinedInput";
 import InputLabel from "@mui/material/InputLabel";
+import InputAdornment from "@mui/material/InputAdornment";
 import FormHelperText from "@mui/material/FormHelperText";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
@@ -37,12 +40,13 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import EditIcon from "@mui/icons-material/Edit";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import RoomIcon from "@mui/icons-material/Room";
 
 // import DialogPassword from "@/components/DialogPassword";
 import AdminShell from "@/layout/AdminShell";
 import ContextAuthenticate from "@/context/authenticate";
 import AdminContext from "@/context/admin";
-// import { useUser } from "@/lib/user";
+import { useGlobal } from "@/lib/helper-ui";
 import {
   useGetByNameQuery,
   useGetByNameWithTasksQuery,
@@ -53,6 +57,7 @@ import {
   useCreateMutation as useCreateMutationTasks,
   useUpdateMutation as useUpdateMutationTasks,
 } from "@/store/tasks";
+import { useGetAllQuery as useGetAllQuerySupervisors } from "@/store/supervisors";
 // import Loading from "@/layout/Loading";
 
 const DragDrop = (props) => {
@@ -117,6 +122,8 @@ export default function ProjectsDetail(props) {
   // @ts-ignore
   const user = useSelector((state) => state.user);
   // const dispatch = useDispatch();
+  const [get_temp_project, set_temp_project] = useGlobal("project");
+  const [get_temp_file, set_temp_file] = useGlobal("project-file");
   const {
     data: project = { tasks: [] },
     error: errorProject,
@@ -128,6 +135,18 @@ export default function ProjectsDetail(props) {
   } = useGetByNameWithTasksQuery(
     { name, token: user.token },
     { skip: name == "Buat Proyek" }
+  );
+  const {
+    data: supervisors = [],
+    error: supervisors_error,
+    isLoading: is_loading_supervisors,
+    isFetching: is_fetching_supervisors,
+    isSuccess: is_success_supervisors,
+    isError: is_error_supervisors,
+    // refetch,
+  } = useGetAllQuerySupervisors(
+    { token: user.token },
+    { skip: user.account.role != "admin" }
   );
   const [
     create,
@@ -166,7 +185,9 @@ export default function ProjectsDetail(props) {
       isError: is_error_create_tasks,
     },
   ] = useCreateMutationTasks();
+  // const { values = {} } = useFormikContext();
   const [tasks, setTasks] = useState([]);
+  // const [supervisors, set_supervisors] = useState([]);
   const [created, setCreated] = useState(false);
   const [file, setFile] = useState(null);
   const [image, setImage] = useState("");
@@ -208,6 +229,10 @@ export default function ProjectsDetail(props) {
         image,
         fiscal_year: values.fiscal_year + "",
         contract_date: values.contract_date.toString(),
+        coordinate:
+          typeof values.coordinate === "string"
+            ? values.coordinate.split(",").map((coord) => +coord)
+            : values.coordinate,
       });
       if (created) {
         delete data.tasks;
@@ -220,6 +245,7 @@ export default function ProjectsDetail(props) {
         });
       } else {
         delete data.tasks;
+        data.id_admins = user.account.id;
         await create({ data, file, token: user.token });
       }
     } catch (error) {
@@ -312,20 +338,29 @@ export default function ProjectsDetail(props) {
   const handleSnackClose = (event, reason) => {
     setSnack((prev) => ({ ...prev, open: false }));
   };
+  const handleSelectMap = (values) => {
+    return () => {
+      set_temp_project(values);
+      set_temp_file({ image, file });
+      router.push("/admin/projects/pin");
+    };
+  };
 
   useEffect(() => {
     ctx_admin.set_loader(isCreating || isUpdating || is_loading_update_tasks);
   }, [isCreating, isUpdating, is_loading_update_tasks]);
-  // useEffect(
-  //   function () {
-  //     setCreated(!!project?.id);
-  //     ctx_admin.set_ctx_data({
-  //       title: !!project?.id ? project.name : "Create Project",
-  //       active_link: "/admin/projects",
-  //     });
-  //   },
-  //   [project]
-  // );
+  useEffect(function () {
+    ctx_admin.set_ctx_data({
+      // @ts-ignore
+      title: created ? project.name : "Create Project",
+      active_link: "/admin/projects",
+    });
+    const temp_file = get_temp_file();
+    if (temp_file) {
+      setFile(temp_file.file);
+      setImage(temp_file.image);
+    }
+  });
   useEffect(() => {
     calculateProgress();
   }, [tasks]);
@@ -372,6 +407,8 @@ export default function ProjectsDetail(props) {
   }, [isSuccess, isError]);
   useEffect(() => {
     if (isSuccessCreating) {
+      set_temp_project(null);
+      set_temp_file(null);
       setSnack((prev) => ({
         ...prev,
         open: true,
@@ -406,6 +443,8 @@ export default function ProjectsDetail(props) {
   }, [isSuccessCreating, isErrorCreating]);
   useEffect(() => {
     if (isSuccessUpdating) {
+      set_temp_project(null);
+      set_temp_file(null);
       setSnack((prev) => ({
         ...prev,
         open: true,
@@ -629,8 +668,11 @@ export default function ProjectsDetail(props) {
                   progress: "",
                   fiscal_year: "",
                   fund_source: "",
+                  coordinate: "",
+                  id_supervisors: undefined,
                 },
-                project
+                project,
+                get_temp_project()
               )}
               validate={handleValidate}
               onSubmit={handleSubmit}
@@ -847,6 +889,63 @@ export default function ProjectsDetail(props) {
                           ))}
                         </Select>
                       </FormControl>
+                      <FormControl variant="outlined">
+                        <InputLabel htmlFor="coordinate" required>
+                          Kordinat
+                        </InputLabel>
+                        <OutlinedInput
+                          id="coordinate"
+                          label="Kordinat"
+                          name="coordinate"
+                          type="text"
+                          value={values.coordinate}
+                          error={!!errors.coordinate}
+                          disabled={isSubmitting}
+                          onChange={(evt) =>
+                            setFieldValue("coordinate", evt.target.value)
+                          }
+                          endAdornment={
+                            <InputAdornment position="end">
+                              <IconButton
+                                aria-label="pin coordinate"
+                                onClick={handleSelectMap(values)}
+                                // onMouseDown={handleMouseDownPassword}
+                                edge="end"
+                              >
+                                <RoomIcon />
+                              </IconButton>
+                            </InputAdornment>
+                          }
+                        />
+                        <FormHelperText>
+                          {errors.coordinate ? errors.coordinate + "" : ""}
+                        </FormHelperText>
+                      </FormControl>
+                      {user.account.role == "admin" && (
+                        <FormControl fullWidth>
+                          <InputLabel id="id_supervisors">Pengawas</InputLabel>
+                          <Select
+                            labelId="id_supervisors"
+                            id="id_supervisors"
+                            name="id_supervisors"
+                            label="Pengawas"
+                            value={values.id_supervisors}
+                            onChange={(event) =>
+                              setFieldValue(
+                                "id_supervisors",
+                                event.target.value
+                              )
+                            }
+                            disabled={isSubmitting}
+                          >
+                            {supervisors.map((item) => (
+                              <MenuItem key={item.username} value={item.id}>
+                                {item.username}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )}
                     </Box>
                     <Box
                       display="grid"

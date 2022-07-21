@@ -6,18 +6,6 @@
     "access": {}
   },
   {
-    "id": "d",
-    "name": "Common",
-    "index": "Common",
-    "access": {}
-  },
-  {
-    "id": "e",
-    "name": "Anonymous",
-    "index": "Anonymous",
-    "access": {}
-  },
-  {
     "id": "c",
     "name": "Officer",
     "index": "Officer",

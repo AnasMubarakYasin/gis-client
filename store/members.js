@@ -74,12 +74,32 @@ export const membersApi = createApi({
     }),
 
     updateById: builder.mutation({
-      query: ({ id, data, token }) => ({
-        url: `/${id}`,
-        method: "PATCH",
-        headers: { authorization: `Bearer ${token}` },
-        body: data,
-      }),
+      async queryFn(
+        { id, data, image, token },
+        queryApi,
+        extraOptions,
+        baseQuery
+      ) {
+        if (image) {
+          const res_img = await baseQuery({
+            url: `/image`,
+            method: "POST",
+            headers: { authorization: `Bearer ${token}` },
+            body: image,
+          });
+          if (res_img.error) {
+            return res_img;
+          }
+          data.image = res_img.data;
+        }
+        const res = await baseQuery({
+          url: `/${id}`,
+          method: "PATCH",
+          headers: { authorization: `Bearer ${token}` },
+          body: data,
+        });
+        return res;
+      },
     }),
     removeById: builder.mutation({
       query: ({ id, token }) => ({
@@ -89,11 +109,11 @@ export const membersApi = createApi({
       }),
     }),
     removeMany: builder.mutation({
-      query: ({ ids, token }) => ({
+      query: ({ data, token }) => ({
         url: "",
         method: "DELETE",
         headers: { authorization: `Bearer ${token}` },
-        body: ids,
+        body: data,
       }),
     }),
   }),

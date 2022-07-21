@@ -15,6 +15,7 @@ import TextField from "@mui/material/TextField";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import MUILink from "@mui/material/Link";
+import LinearProgress from "@mui/material/LinearProgress";
 
 // import Input from '@mui/material/Input';
 // import FilledInput from '@mui/material/FilledInput';
@@ -50,7 +51,7 @@ function PageSignin(props) {
   );
   // @ts-ignore
   const [values, setValues] = useState({
-    name: "",
+    username: "",
     password: "",
   });
   const [pass, setPass] = useState({
@@ -66,6 +67,12 @@ function PageSignin(props) {
     message: <div></div>,
     vertical: "bottom",
     horizontal: "center",
+  });
+  const [loaderProgress, setLoaderProgress] = useState({
+    show: false,
+    backdrop: false,
+    variant: "indeterminate",
+    progress: 100,
   });
   const handleClickShowPassword = () => {
     setPass({
@@ -126,9 +133,39 @@ function PageSignin(props) {
       }));
     }
   }, [isSuccess, isError]);
+  useEffect(() => {
+    router.events.on("routeChangeStart", handleRouteChangeStart);
+    router.events.on("routeChangeComplete", handleRouteChangeComplete);
+    return () => {
+      router.events.off("routeChangeStart", handleRouteChangeStart);
+      router.events.off("routeChangeComplete", handleRouteChangeComplete);
+    };
+  }, []);
+
+  const handleRouteChangeStart = () => {
+    setLoaderProgress((prev) => ({ ...prev, show: true, backdrop: true }));
+  };
+  const handleRouteChangeComplete = () => {
+    setLoaderProgress((prev) => ({ ...prev, show: false, backdrop: false }));
+  };
 
   return (
     <LayoutPage animate>
+      {loaderProgress.show && (
+        <LinearProgress
+          color="secondary"
+          // @ts-ignore
+          variant={loaderProgress.variant}
+          value={loaderProgress.progress}
+          sx={{
+            position: "fixed",
+            height: "4px",
+            width: "100%",
+            zIndex: "1000",
+          }}
+        />
+      )}
+
       <Box
         display="grid"
         sx={{
@@ -183,15 +220,17 @@ function PageSignin(props) {
                     autoFocus
                     required
                     label="Username"
-                    name="name"
+                    name="username"
                     type="text"
                     autoComplete="username"
-                    value={values.name}
-                    error={!!errors.name}
+                    value={values.username}
+                    error={!!errors.username}
                     // @ts-ignore
-                    helperText={errors.name}
+                    helperText={errors.username}
                     disabled={isSubmitting}
-                    onChange={(evt) => setFieldValue("name", evt.target.value)}
+                    onChange={(evt) =>
+                      setFieldValue("username", evt.target.value)
+                    }
                   />
                   <Box display="grid">
                     <FormControl variant="outlined">

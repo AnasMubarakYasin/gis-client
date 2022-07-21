@@ -92,7 +92,11 @@ export default function Members(props) {
   // @ts-ignore
   const user = useSelector((state) => state.user);
   const {
-    data: members = [{}, {}, {}],
+    data: members = [
+      { id: 10, username: "a" },
+      { id: 20, username: "b" },
+      { id: 30, username: "c" },
+    ],
     isLoading,
     isFetching,
     isSuccess,
@@ -150,7 +154,7 @@ export default function Members(props) {
   const [dialogValue, setDialogValue] = useState({
     id: undefined,
     image: "",
-    name: "",
+    username: "",
     email: "",
     role: "",
     password: "",
@@ -203,12 +207,12 @@ export default function Members(props) {
   // @ts-ignore
   const handleRemoveDialogconfirm = () => {};
   const handleRemoveMember = () => {
-    const ids = [];
+    const data = [];
     for (const index of removeList) {
       const member = members[index];
-      ids.push(member.id + "");
+      data.push(member);
     }
-    removeAll({ ids, token: user.token });
+    removeAll({ data, token: user.token });
   };
   const handleUpdateUndo = () => {
     undo({ list: [dataUpdating], token: user.token });
@@ -234,7 +238,7 @@ export default function Members(props) {
     setDialogValue({
       id: undefined,
       image: "",
-      name: "",
+      username: "",
       email: "",
       role: "",
       password: "",
@@ -268,7 +272,6 @@ export default function Members(props) {
       }
     }
   };
-
   // @ts-ignore
   const handleButtonToggleGroup = (event, formats) => {
     setButtonToggleGroup(([prev]) => {
@@ -339,10 +342,10 @@ export default function Members(props) {
       }
       // @ts-ignore
       const message = errorCreating.error
-        // @ts-ignore
-        ? errorCreating.error
-        // @ts-ignore
-        : errorCreating.data.message;
+        ? // @ts-ignore
+          errorCreating.error
+        : // @ts-ignore
+          errorCreating.data.message;
       setSnack((prev) => ({
         ...prev,
         open: true,
@@ -354,7 +357,6 @@ export default function Members(props) {
       }));
     }
   }, [isCreatingSuccess, isCreatingError]);
-
   useEffect(() => {
     if (isUpdatingSuccess) {
       handleDialogAddClose();
@@ -383,10 +385,10 @@ export default function Members(props) {
       }
       // @ts-ignore
       const message = errorUpdating.error
-        // @ts-ignore
-        ? errorUpdating.error
-        // @ts-ignore
-        : errorUpdating.data.message;
+        ? // @ts-ignore
+          errorUpdating.error
+        : // @ts-ignore
+          errorUpdating.data.message;
       setSnack((prev) => ({
         ...prev,
         open: true,
@@ -398,7 +400,6 @@ export default function Members(props) {
       }));
     }
   }, [isUpdatingSuccess, isUpdatingError]);
-
   useEffect(() => {
     if (isRemovingSuccess) {
       handleCloseDialog();
@@ -428,10 +429,10 @@ export default function Members(props) {
       }
       // @ts-ignore
       const message = errorRemoving.error
-        // @ts-ignore
-        ? errorRemoving.error
-        // @ts-ignore
-        : errorRemoving.data.message;
+        ? // @ts-ignore
+          errorRemoving.error
+        : // @ts-ignore
+          errorRemoving.data.message;
 
       setSnack((prev) => ({
         ...prev,
@@ -468,10 +469,10 @@ export default function Members(props) {
       }
       // @ts-ignore
       const message = errorUndoing.error
-        // @ts-ignore
-        ? errorUndoing.error
-        // @ts-ignore
-        : errorUndoing.data.message;
+        ? // @ts-ignore
+          errorUndoing.error
+        : // @ts-ignore
+          errorUndoing.data.message;
 
       setSnack((prev) => ({
         ...prev,
@@ -564,7 +565,15 @@ export default function Members(props) {
           columns={{ xs: 1, sm: 4, md: 4, lg: 6, xl: 8 }}
         >
           {members.map((member, index) => (
-            <Grid item xs={1} sm={2} md={2} lg={2} xl={2} key={index}>
+            <Grid
+              item
+              xs={1}
+              sm={2}
+              md={2}
+              lg={2}
+              xl={2}
+              key={`${member.username}-${member.id}`}
+            >
               <Card
                 variant="outlined"
                 sx={{ opacity: isFetching ? ".7" : "1s" }}
@@ -605,7 +614,7 @@ export default function Members(props) {
                       </Skeleton>
                     ) : (
                       <Avatar
-                        alt={member.name}
+                        alt={member.username}
                         src={member.image}
                         sx={{ width: "86px", height: "86px" }}
                       ></Avatar>
@@ -641,7 +650,7 @@ export default function Members(props) {
                             variant="h6"
                             fontWeight={theme.typography.fontWeightMedium}
                           >
-                            {member.name}
+                            {member.username}
                           </Typography>
                           <Typography variant="subtitle1">
                             {member.role}
@@ -688,15 +697,17 @@ export default function Members(props) {
                     autoFocus
                     required
                     label="Name"
-                    name="name"
+                    name="username"
                     type="text"
                     autoComplete="username"
-                    value={values.name}
-                    error={!!errors.name}
+                    value={values.username}
+                    error={!!errors.username}
                     // @ts-ignore
-                    helperText={errors.name}
+                    helperText={errors.username}
                     disabled={isSubmitting}
-                    onChange={(evt) => setFieldValue("name", evt.target.value)}
+                    onChange={(evt) =>
+                      setFieldValue("username", evt.target.value)
+                    }
                   ></TextField>
                   <TextField
                     required
@@ -725,7 +736,10 @@ export default function Members(props) {
                       }
                     >
                       {roles.map((role) => (
-                        <MenuItem key={role.name} value={role.name}>
+                        <MenuItem
+                          key={role.name}
+                          value={role.name.toLowerCase()}
+                        >
                           {role.name}
                         </MenuItem>
                       ))}
