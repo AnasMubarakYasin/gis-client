@@ -1,7 +1,12 @@
 {
-  "name": "gis",
-  "version": "0.1.0",
-  "private": true,
+  "name": "gis-client",
+  "version": "0.2.0",
+  "description": "Client",
+  "author": "Anas <bladerlaiga@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": "16.x.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

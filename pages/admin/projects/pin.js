@@ -22,6 +22,7 @@ import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import NoSsr from "@mui/material/NoSsr";
 
+import TextField from "@mui/material/TextField";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import InputAdornment from "@mui/material/InputAdornment";
 import FormControl from "@mui/material/FormControl";
@@ -34,6 +35,12 @@ import AdminShell from "@/layout/AdminShell";
 import ContextAuthenticate from "@/context/authenticate";
 import ContextAdmin from "@/context/admin";
 import { useGlobal } from "@/lib/helper-ui";
+import { MAP } from "@/lib/const";
+
+/**
+ * @type {import('mapbox-gl').Map}
+ */
+let map;
 
 function CustomControl(props) {
   const { current: map } = useMap();
@@ -77,39 +84,46 @@ function CenterPin(props) {
 
   return <></>;
 }
+function geocoding_reverse({ ept = "mapbox.places", lng, lat, token, signal }) {
+  return fetch(
+    `https://api.mapbox.com/geocoding/v5/${ept}/${lng},${lat}.json?access_token=${token}`
+  ).then((res) => res.json());
+}
 
 export default function Pin(props) {
-  const TOKEN_MAP = process.env.NEXT_PUBLIC_MAP_TOKEN;
   const router = useRouter();
   const theme = useTheme();
   // const ctx_auth = useContext(ContextAuthenticate);
   const ctx_admin = useContext(ContextAdmin);
   // @ts-ignore
-  const user = useSelector((state) => state.user);
+  // const user = useSelector((state) => state.user);
   const [get_temp_project, set_temp_project] = useGlobal("project");
-  const [center, set_center] = useState([120.1390389, -3.9681887]);
-  const [viewState, set_view_state] = useState({
-    longitude: 120.1390389,
-    latitude: -3.9681887,
-    zoom: 9,
+  const [have_map, set_have_map] = useState(false);
+  const [select_disabled, set_select_disabled] = useState(true);
+  const [values, set_values] = useState({
+    coordinate: [MAP.LNG, MAP.LAT],
+    address: MAP.NAME.join(", "),
   });
 
   useEffect(() => {
     const project = get_temp_project();
-
     if (!project) {
       router.back();
     } else {
       let coord;
+      let addr;
       if (typeof project.coordinate == "object") {
         coord = project.coordinate;
-      } else if (project.coordinate) {
+        addr = project.address.join(", ");
+      } else if (typeof project.coordinate == "string") {
         coord = project.coordinate.split(",").map((coord) => +coord);
+        addr = project.addr;
       }
-      if (coord) {
-        set_view_state((prev) => {
-          return { longitude: coord[0], latitude: coord[1], zoom: prev.zoom };
-        });
+      if (coord && addr) {
+        set_values({ coordinate: coord, address: addr });
+      }
+      if (coord && map) {
+        map.flyTo({ center: coord });
       }
     }
   }, []);
@@ -119,21 +133,130 @@ export default function Pin(props) {
       active_link: "/admin/projects",
     });
   }, []);
-
-  function handleSelect() {
+  useEffect(() => {
+    if (have_map) {
+      set_style();
+      map.once("styledata", () => {
+        set_source();
+        set_select_disabled(false);
+      });
+      // @ts-ignore
+      map.flyTo({ center: values.coordinate });
+    }
+  }, [have_map, theme.palette.mode]);
+  function set_style() {
+    if (theme.palette.mode == "dark") {
+      map.setStyle("mapbox://styles/mapbox/dark-v10");
+    } else {
+      map.setStyle(MAP.STYLE);
+    }
+  }
+  function set_source() {
+    const fill =
+      theme.palette.mode == "dark" ? "rgba(200, 100, 240, 1)" : "#627BC1";
+    const line_fill =
+      theme.palette.mode == "dark" ? "rgba(200, 100, 240, 1)" : "#627BC1";
+    const color = theme.palette.mode == "dark" ? "white" : "black";
+    if (map.getSource("wajo")) {
+      return;
+    }
+    map.addSource("wajo", {
+      type: "geojson",
+      data: "/data/wajo.json",
+    });
+    map.addLayer({
+      id: "wajo-fills",
+      type: "fill",
+      source: "wajo",
+      layout: {},
+      paint: {
+        "fill-color": fill,
+        "fill-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false],
+          1,
+          0.1,
+        ],
+      },
+    });
+    map.addLayer({
+      id: "wajo-borders",
+      type: "line",
+      source: "wajo",
+      layout: {},
+      paint: {
+        "line-color": line_fill,
+        "line-width": 2,
+      },
+    });
+    map.addLayer({
+      id: "wajo-labels",
+      type: "symbol",
+      source: "wajo",
+      layout: {
+        "text-field": [
+          "format",
+          ["upcase", ["get", "Name"]],
+          { "font-scale": 0.7 },
+          "\n",
+          {},
+        ],
+        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+      },
+      paint: { "text-color": color },
+    });
+  }
+  function handle_select() {
     const project = get_temp_project();
-    project.coordinate = center.join(",");
+    project.coordinate = values.coordinate.join(",");
+    project.address = values.address;
     set_temp_project(project);
     router.back();
   }
-  function handleLoad(event) {
-    const coord = event.target.getCenter();
-    set_center([coord.lng, coord.lat]);
+  function handle_load(event) {
+    map = event.target;
+    // const coord = map.getCenter();
+    set_have_map(true);
   }
-  function handleMove(event) {
+  function handle_move(event) {
     const coord = event.target.getCenter();
-    set_center([coord.lng, coord.lat]);
-    set_view_state(event.viewState);
+    const center = [coord.lng, coord.lat];
+    set_values({ coordinate: center, address: values.address });
+  }
+  function handle_move_str(event) {
+    set_select_disabled(true);
+  }
+  function handle_move_end(event) {
+    const coord = event.target.getCenter();
+    geocoding_reverse({
+      ...coord,
+      token: MAP.TOKEN,
+    }).then((body) => {
+      const address = [];
+      const address_visible = [];
+      for (const feature of body.features) {
+        address.unshift(feature.text);
+        switch (feature.place_type[0]) {
+          case "neighborhood":
+          case "locality":
+          case "place":
+          case "region":
+          case "country":
+            address_visible.unshift(feature.text);
+          case "poi":
+            break;
+          case "postcode":
+            break;
+          default:
+            break;
+        }
+      }
+      set_values({
+        coordinate: values.coordinate,
+        address: address_visible.join(", "),
+      });
+      set_select_disabled(false);
+    });
   }
 
   return (
@@ -159,17 +282,26 @@ export default function Pin(props) {
             gap={{
               xs: "8px",
               sm: "16px",
+              md: "24px",
             }}
           >
             <Box display="grid" sx={{ aspectRatio: { xs: "1", sm: "4 / 2" } }}>
               <NoSsr>
                 <Map
-                  mapboxAccessToken={TOKEN_MAP}
-                  {...viewState}
+                  mapboxAccessToken={MAP.TOKEN}
+                  initialViewState={{
+                    longitude: values.coordinate[0],
+                    latitude: values.coordinate[1],
+                    // @ts-ignore
+                    bounds: MAP.BBOX,
+                    zoom: MAP.ZOOM,
+                  }}
                   style={{ borderRadius: "6px" }}
-                  mapStyle="mapbox://styles/mapbox/streets-v9"
-                  onMove={handleMove}
-                  onLoad={handleLoad}
+                  mapStyle={MAP.STYLE}
+                  onMove={handle_move}
+                  onMoveStart={handle_move_str}
+                  onMoveEnd={handle_move_end}
+                  onLoad={handle_load}
                 >
                   <CenterPin>
                     <Box
@@ -181,15 +313,12 @@ export default function Pin(props) {
                       <RoomIcon fontSize="large" color="primary" />
                     </Box>
                   </CenterPin>
-                  <CustomControl>
+                  {/* <CustomControl>
                     <FormControl variant="outlined" size="small">
-                      {/* <InputLabel htmlFor="input-search">Search...</InputLabel> */}
                       <OutlinedInput
                         sx={{ bgcolor: "white" }}
                         size="small"
                         id="input-search"
-                        // value={values.weight}
-                        // onChange={handleChange("weight")}
                         placeholder="Search..."
                         startAdornment={
                           <InputAdornment position="start">
@@ -202,19 +331,36 @@ export default function Pin(props) {
                         }}
                       />
                     </FormControl>
-                  </CustomControl>
-                  <GeolocateControl />
+                  </CustomControl> */}
+                  {/* <GeolocateControl /> */}
                   <NavigationControl />
                   <ScaleControl />
                 </Map>
               </NoSsr>
             </Box>
-            <Box>
+            <Box display="grid" gap={theme.spacing(3)}>
+              <Box display="grid" gap={theme.spacing(2)}>
+                <TextField
+                  id="coordinate"
+                  label="Kordinat"
+                  variant="outlined"
+                  value={values.coordinate.join(",")}
+                  aria-readonly
+                />
+                <TextField
+                  id="address"
+                  label="Alamat"
+                  variant="outlined"
+                  value={values.address}
+                  aria-readonly
+                />
+              </Box>
               <Button
                 variant="contained"
                 size="large"
                 disableElevation
-                onClick={handleSelect}
+                disabled={select_disabled}
+                onClick={handle_select}
               >
                 Pilih
               </Button>

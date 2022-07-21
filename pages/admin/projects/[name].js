@@ -228,11 +228,18 @@ export default function ProjectsDetail(props) {
         name: values.name.trim(),
         image,
         fiscal_year: values.fiscal_year + "",
+        id_supervisors: values.id_supervisors
+          ? values.id_supervisors
+          : undefined,
         contract_date: values.contract_date.toString(),
         coordinate:
-          typeof values.coordinate === "string"
+          typeof values.coordinate == "string"
             ? values.coordinate.split(",").map((coord) => +coord)
             : values.coordinate,
+        address:
+          typeof values.address == "string"
+            ? values.address.split(",").map((addr) => addr)
+            : values.address,
       });
       if (created) {
         delete data.tasks;
@@ -340,6 +347,7 @@ export default function ProjectsDetail(props) {
   };
   const handleSelectMap = (values) => {
     return () => {
+      console.log(values);
       set_temp_project(values);
       set_temp_file({ image, file });
       router.push("/admin/projects/pin");
@@ -669,7 +677,8 @@ export default function ProjectsDetail(props) {
                   fiscal_year: "",
                   fund_source: "",
                   coordinate: "",
-                  id_supervisors: undefined,
+                  address: "",
+                  id_supervisors: "",
                 },
                 project,
                 get_temp_project()
@@ -909,7 +918,7 @@ export default function ProjectsDetail(props) {
                               <IconButton
                                 aria-label="pin coordinate"
                                 onClick={handleSelectMap(values)}
-                                // onMouseDown={handleMouseDownPassword}
+                                disabled={isSubmitting}
                                 edge="end"
                               >
                                 <RoomIcon />
@@ -921,31 +930,37 @@ export default function ProjectsDetail(props) {
                           {errors.coordinate ? errors.coordinate + "" : ""}
                         </FormHelperText>
                       </FormControl>
-                      {user.account.role == "admin" && (
-                        <FormControl fullWidth>
-                          <InputLabel id="id_supervisors">Pengawas</InputLabel>
-                          <Select
-                            labelId="id_supervisors"
-                            id="id_supervisors"
-                            name="id_supervisors"
-                            label="Pengawas"
-                            value={values.id_supervisors}
-                            onChange={(event) =>
-                              setFieldValue(
-                                "id_supervisors",
-                                event.target.value
-                              )
-                            }
-                            disabled={isSubmitting}
-                          >
-                            {supervisors.map((item) => (
-                              <MenuItem key={item.username} value={item.id}>
-                                {item.username}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      )}
+                      <Field
+                        component={FormikTextField}
+                        variant="outlined"
+                        name="address"
+                        type="address"
+                        label="Alamat"
+                        required
+                      />
+                      <FormControl fullWidth>
+                        <InputLabel id="id_supervisors">Pengawas</InputLabel>
+                        <Select
+                          labelId="id_supervisors"
+                          id="id_supervisors"
+                          name="id_supervisors"
+                          label="Pengawas"
+                          value={values.id_supervisors ?? ""}
+                          onChange={(event) =>
+                            setFieldValue("id_supervisors", event.target.value)
+                          }
+                          disabled={isSubmitting}
+                        >
+                          {supervisors.map((item) => (
+                            <MenuItem key={item.username} value={item.id}>
+                              {item.username}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      {/* {user.account.role == "admin" && (
+                        
+                      )} */}
                     </Box>
                     <Box
                       display="grid"

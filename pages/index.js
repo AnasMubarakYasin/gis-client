@@ -48,6 +48,7 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 
 import AdbIcon from "@mui/icons-material/Adb";
 import RoomIcon from "@mui/icons-material/Room";
+import CircleIcon from "@mui/icons-material/Circle";
 import SearchIcon from "@mui/icons-material/Search";
 
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -57,6 +58,8 @@ import {
   MapProvider,
   Marker,
   Popup,
+  Source,
+  Layer,
   AttributionControl,
   GeolocateControl,
   NavigationControl,
@@ -65,6 +68,7 @@ import {
 
 import Page from "@/layout/Page";
 import { useGetAllQuery } from "@/store/projects";
+import { MAP } from "@/lib/const";
 
 const nav_links = [
   { text: "Beranda", href: "/" },
@@ -78,20 +82,51 @@ const nav_links = [
   },
   { text: "Berita", href: "/news" },
 ];
-const blogs = [{ img: "", published_at: "", title: "", desc: "", link: "" }];
+// const blogs = [{ img: "", published_at: "", title: "", desc: "", link: "" }];
 /**
  * @type {import('mapbox-gl').Map}
  */
 let map;
 
+const geojson = {
+  type: "FeatureCollection",
+  features: [
+    {
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [-122.4, 37.8] },
+    },
+  ],
+};
+
+const layerStyle = {
+  id: "point",
+  type: "circle",
+  paint: {
+    "circle-radius": 10,
+    "circle-color": "#007cbf",
+  },
+};
+
+function capitalize_each_word(str) {
+  const result = [];
+  for (const word of str.split(" ")) {
+    if (!word.length) continue;
+    let str = word[0].toUpperCase();
+    str += word.slice(1).toLowerCase();
+    result.push(str);
+  }
+  return result.join(" ");
+}
+
 export default function Home(props) {
   const theme = useTheme();
   const app_name = process.env.NEXT_PUBLIC_WEB_NAME;
-  const TOKEN_MAP = process.env.NEXT_PUBLIC_MAP_TOKEN;
   const [ref_nav, set_nav_link] = useState(null);
   const [have_map, set_have_map] = useState(null);
   const [selected_tab, set_selected_tab] = useState(0);
   const [selected_marker, set_selected_marker] = useState(0);
+  const [list_message, set_list_message] = useState("");
+  const [selected_sub_district, set_selected_sub_district] = useState("");
   const open = !!ref_nav;
   const {
     data = [],
@@ -113,12 +148,21 @@ export default function Home(props) {
       project_status = project_status_filter = "Perawatan";
       break;
   }
-  projects = data.filter((item) =>
-    new RegExp(`${project_status_filter}`).test(item.status)
-  );
+  if (selected_sub_district) {
+    project_status += ` ${selected_sub_district}`;
+  }
+  projects = data.filter((item) => {
+    const address = new RegExp(`${selected_sub_district || ".*"}`).test(
+      item.address.join(" ")
+    );
+    const status = new RegExp(`${project_status_filter}`).test(item.status);
+    return status && address;
+  });
+  project_status += ` (${projects.length})`;
   useEffect(() => {
     if (!map) {
       set_have_map(false);
+    } else {
     }
   }, [map]);
   function handle_nav_click(event) {
@@ -143,6 +187,110 @@ export default function Home(props) {
   function handle_load(event) {
     map = event.target;
     set_have_map(true);
+    let hoveredStateId = null;
+    let firstSymbolId = null;
+    const layers = map.getStyle().layers;
+    for (const layer of layers) {
+      if (layer.type === "symbol") {
+        firstSymbolId = layer.id;
+        break;
+      }
+    }
+    map.addSource("wajo", {
+      type: "geojson",
+      data: "/data/wajo.json",
+    });
+    map.addLayer(
+      {
+        id: "state-fills",
+        type: "fill",
+        source: "wajo",
+        layout: {},
+        paint: {
+          "fill-color": "rgba(200, 100, 240, 1)",
+          "fill-opacity": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            1,
+            0.25,
+          ],
+        },
+      },
+      firstSymbolId
+    );
+    map.addLayer({
+      id: "state-borders",
+      type: "line",
+      source: "wajo",
+      layout: {},
+      paint: {
+        "line-color": "rgba(200, 100, 240, 1)",
+        "line-width": 2,
+      },
+    });
+    map.on("mousemove", "state-fills", (e) => {
+      if (e.features.length > 0) {
+        if (hoveredStateId !== null) {
+          map.setFeatureState(
+            { source: "wajo", id: hoveredStateId },
+            { hover: false }
+          );
+        }
+        hoveredStateId = e.features[0].id;
+        map.setFeatureState(
+          { source: "wajo", id: hoveredStateId },
+          { hover: true }
+        );
+      }
+    });
+    map.on("mouseleave", "state-fills", () => {
+      if (hoveredStateId !== null) {
+        map.setFeatureState(
+          { source: "wajo", id: hoveredStateId },
+          { hover: false }
+        );
+      }
+      hoveredStateId = null;
+    });
+
+    map.addLayer({
+      id: "wajo-labels",
+      type: "symbol",
+      source: "wajo",
+      layout: {
+        "text-field": [
+          "format",
+          ["upcase", ["get", "Name"]],
+          { "font-scale": 0.75 },
+          "\n",
+          {},
+        ],
+        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+      },
+      paint: {
+        "text-halo-color": "#000",
+        "text-halo-width": 1,
+        "text-color": "#fff",
+      },
+    });
+
+    map.on("click", "state-fills", (event) => {
+      console.log(event);
+      if (event.features) {
+        const [feature] = event.features;
+        set_selected_sub_district(
+          capitalize_each_word(feature.properties.Name)
+        );
+      }
+      // @ts-ignore
+      map.flyTo({ center: event.lngLat.toArray(), zoom: 10 });
+    });
+    map.on("mouseenter", "state-fills", () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+    map.on("mouseleave", "state-fills", () => {
+      map.getCanvas().style.cursor = "";
+    });
   }
 
   return (
@@ -311,20 +459,24 @@ export default function Home(props) {
                   >
                     <NoSsr>
                       <Map
-                        mapboxAccessToken={TOKEN_MAP}
-                        // {...viewState}
+                        mapboxAccessToken={MAP.TOKEN}
                         initialViewState={{
-                          longitude: 120.1390389,
-                          latitude: -3.9681887,
-                          zoom: 9,
+                          longitude: MAP.LNG,
+                          latitude: MAP.LAT,
+                          zoom: MAP.ZOOM,
                         }}
                         style={{ borderRadius: "6px" }}
-                        mapStyle="mapbox://styles/mapbox/streets-v9"
+                        mapStyle={
+                          /* MAP.STYLE */ "mapbox://styles/mapbox/dark-v10"
+                        }
                         onLoad={handle_load}
                       >
                         {/* <GeolocateControl /> */}
                         <NavigationControl />
                         <ScaleControl />
+                        {/* <Source id="my-data" type="geojson" data={geojson}>
+                          <Layer {...layerStyle} />
+                        </Source> */}
                         {projects.map((item) => (
                           <Marker
                             key={"marker" + item.name}
@@ -332,17 +484,9 @@ export default function Home(props) {
                             latitude={item.coordinate[1]}
                             anchor="bottom"
                           >
-                            <RoomIcon color="primary" fontSize="large" />
+                            <CircleIcon color="primary" fontSize="medium" />
                           </Marker>
                         ))}
-                        {/* <Popup
-                          longitude={120.1390389}
-                          latitude={-3.9681887}
-                          anchor="bottom"
-                          onClose={() => {}}
-                        >
-                          You are here
-                        </Popup> */}
                       </Map>
                     </NoSsr>
                   </Grid>
@@ -367,7 +511,7 @@ export default function Home(props) {
                             </ListItemAvatar>
                             <ListItemText
                               primary={item.name}
-                              secondary={item.name_company}
+                              secondary={item.address.slice(2).join(", ")}
                             />
                           </ListItemButton>
                         ))}
