@@ -67,7 +67,7 @@ import {
 } from "react-map-gl";
 
 import Page from "@/layout/Page";
-import { useGetAllQuery } from "@/store/projects";
+import { useGetAllPublicQuery } from "@/store/projects";
 import { MAP } from "@/lib/const";
 
 const nav_links = [
@@ -136,7 +136,7 @@ export default function Home(props) {
     isSuccess,
     isError,
     refetch,
-  } = useGetAllQuery();
+  } = useGetAllPublicQuery();
   let project_status_filter = ".*";
   let project_status = "All";
   let projects = [];

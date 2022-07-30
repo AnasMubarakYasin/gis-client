@@ -437,7 +437,7 @@ export default function Projects(props) {
                   >
                     {project.name}
                   </Typography>
-                  <Box display="grid" gap="8px">
+                  {/* <Box display="grid" gap="8px">
                     <LinearProgress
                       variant="determinate"
                       value={project.progress}
@@ -448,7 +448,7 @@ export default function Projects(props) {
                     <Typography variant="body2">
                       Status: {project.status}
                     </Typography>
-                  </Box>
+                  </Box> */}
                 </CardContent>
               </CardActionArea>
             </Card>

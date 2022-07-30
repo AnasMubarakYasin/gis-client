@@ -63,6 +63,7 @@ import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 
 import AdminShell from "@/layout/AdminShell";
 import ContextAuthenticate from "@/context/authenticate";
@@ -79,7 +80,11 @@ import { useGetAllQuery as useGetAllQueryRoles } from "@/store/roles";
 
 import { useForceUpdate } from "@/lib/helper-ui";
 
-// const roles = ["Admin", "Common"];
+const role_id = {
+  supervisor: "Pengawas",
+  admin: "Admin",
+  officer: "Petugas",
+};
 
 // @ts-ignore
 export default function Members(props) {
@@ -92,11 +97,7 @@ export default function Members(props) {
   // @ts-ignore
   const user = useSelector((state) => state.user);
   const {
-    data: members = [
-      { id: 10, username: "a" },
-      { id: 20, username: "b" },
-      { id: 30, username: "c" },
-    ],
+    data: members = [],
     isLoading,
     isFetching,
     isSuccess,
@@ -151,11 +152,14 @@ export default function Members(props) {
   const [openDialog, setOpenDialog] = useState(false);
   const [openDialogAdd, setOpenDialogAdd] = useState(false);
   const [buttonToggleGroup, setButtonToggleGroup] = useState([]);
+  const [image, setImage] = useState("");
+  const [imageFile, setImageFile] = useState(null);
   const [dialogValue, setDialogValue] = useState({
     id: undefined,
     image: "",
     username: "",
-    email: "",
+    name: "",
+    nip: "",
     role: "",
     password: "",
     showPassword: false,
@@ -169,12 +173,15 @@ export default function Members(props) {
     horizontal: "center",
   });
   const handleCreateOrUpdateMember = async (values, { setSubmitting }) => {
-    delete values.id;
     delete values.showPassword;
     if (dialogValue.id) {
-      update({ id: dialogValue.id, data: values, token: user.token });
+      update({
+        data: values,
+        image: imageFile,
+        token: user.token,
+      });
     } else {
-      create({ data: values, token: user.token });
+      create({ data: values, image: imageFile, token: user.token });
     }
     setSubmitting(false);
   };
@@ -235,11 +242,14 @@ export default function Members(props) {
   const handleDialogAddClose = () => {
     handleCloseDialogAdd();
     setButtonToggleGroup([]);
+    setImage("");
+    setImageFile(null);
     setDialogValue({
       id: undefined,
       image: "",
       username: "",
-      email: "",
+      nip: "",
+      name: "",
       role: "",
       password: "",
       showPassword: false,
@@ -325,7 +335,6 @@ export default function Members(props) {
   useEffect(() => {
     if (isCreatingSuccess) {
       handleDialogAddClose();
-      refetch();
       setSnack((prev) => ({
         ...prev,
         open: true,
@@ -335,6 +344,7 @@ export default function Members(props) {
           </Alert>
         ),
       }));
+      refetch();
     } else if (isCreatingError) {
       // @ts-ignore
       if (errorCreating.status == 401) {
@@ -360,7 +370,6 @@ export default function Members(props) {
   useEffect(() => {
     if (isUpdatingSuccess) {
       handleDialogAddClose();
-      refetch();
       setSnack((prev) => ({
         ...prev,
         open: true,
@@ -378,6 +387,7 @@ export default function Members(props) {
           </Alert>
         ),
       }));
+      refetch();
     } else if (isUpdatingError) {
       // @ts-ignore
       if (errorUpdating.status == 401) {
@@ -417,7 +427,12 @@ export default function Members(props) {
               </Button>
             }
           >
-            Success Remove {dataRemoving.length} Member.
+            Success Remove{" "}
+            {
+              // @ts-ignore
+              dataRemoving.length
+            }{" "}
+            Member.
           </Alert>
         ),
       }));
@@ -449,7 +464,9 @@ export default function Members(props) {
   useEffect(() => {
     if (isUndoingSuccess) {
       let length = 1;
+      // @ts-ignore
       if (dataRemoving.length) {
+        // @ts-ignore
         length = dataRemoving.length;
       }
       setSnack((prev) => ({
@@ -564,7 +581,15 @@ export default function Members(props) {
           spacing={{ xs: 2, sm: 2, md: 4, lg: 4, xl: 8 }}
           columns={{ xs: 1, sm: 4, md: 4, lg: 6, xl: 8 }}
         >
-          {members.map((member, index) => (
+          {[
+            ...(isLoading || isFetching
+              ? [
+                  { id: 10, username: "a" },
+                  { id: 20, username: "b" },
+                  { id: 30, username: "c" },
+                ]
+              : members),
+          ].map((member, index) => (
             <Grid
               item
               xs={1}
@@ -587,14 +612,14 @@ export default function Members(props) {
                     sx={{
                       position: "relative",
                       padding: {
-                        xs: theme.spacing(2),
-                        sm: theme.spacing(2),
-                        md: theme.spacing(4),
-                        lg: theme.spacing(4),
-                        xl: theme.spacing(8),
+                        xs: 2,
+                        sm: 2,
+                        md: 4,
+                        lg: 4,
+                        xl: 8,
                       },
                       placeItems: "center",
-                      gap: theme.spacing(2),
+                      gap: 2,
                     }}
                   >
                     {removeMode && (
@@ -604,7 +629,7 @@ export default function Members(props) {
                         // onChange={handleRemoveSelection(index)}
                       />
                     )}
-                    {isLoading ? (
+                    {isLoading || isFetching ? (
                       <Skeleton animation="wave" variant="circular">
                         <Avatar
                           // alt={member.name}
@@ -620,7 +645,7 @@ export default function Members(props) {
                       ></Avatar>
                     )}
                     <Box display="grid" sx={{ placeItems: "center" }}>
-                      {isLoading ? (
+                      {isLoading || isFetching ? (
                         <>
                           <Skeleton
                             animation="wave"
@@ -653,7 +678,7 @@ export default function Members(props) {
                             {member.username}
                           </Typography>
                           <Typography variant="subtitle1">
-                            {member.role}
+                            {role_id[member.role]}
                           </Typography>
                         </>
                       )}
@@ -692,11 +717,62 @@ export default function Members(props) {
               handleSubmit,
             }) => (
               <Form autoComplete="off" onSubmit={handleSubmit}>
-                <Box display="grid" gap={theme.spacing(2)}>
+                <Box display="grid" gap={2}>
+                  <Box display="grid" sx={{ placeItems: "center" }}>
+                    <Button
+                      component="label"
+                      htmlFor="input-image"
+                      sx={{
+                        width: {
+                          xs: "50%",
+                          sm: "25%",
+                        },
+                      }}
+                    >
+                      <input
+                        hidden
+                        accept="image/*"
+                        id="input-image"
+                        type="file"
+                        onChange={(e) => {
+                          if (!e.target.files.length) return;
+                          setImageFile(e.target.files[0]);
+                          setFieldValue(
+                            "image",
+                            URL.createObjectURL(e.target.files[0])
+                          );
+                        }}
+                        disabled={isSubmitting}
+                      />
+                      <Avatar
+                        id="output-image"
+                        variant="rounded"
+                        alt={values.name}
+                        src={values.image}
+                        sx={{
+                          width: "100%",
+                          height: "auto",
+                          aspectRatio: "1",
+                          objectFit: "contain",
+                          objectPosition: "center",
+                          opacity: isSubmitting ? ".7" : "1",
+                        }}
+                      >
+                        <PhotoCameraIcon
+                          sx={{ width: "44px", height: "44px" }}
+                        />
+                      </Avatar>
+                      {/* </Button> */}
+                    </Button>
+                    {/* <FormHelperText error={!!errors.image}>
+                      {errors.image ? errors.image + "" : ""}
+                    </FormHelperText> */}
+                  </Box>
                   <TextField
                     autoFocus
                     required
-                    label="Name"
+                    readOnly={!!dialogValue.id}
+                    label="Username"
                     name="username"
                     type="text"
                     autoComplete="username"
@@ -706,26 +782,41 @@ export default function Members(props) {
                     helperText={errors.username}
                     disabled={isSubmitting}
                     onChange={(evt) =>
+                      !dialogValue.id &&
                       setFieldValue("username", evt.target.value)
                     }
                   ></TextField>
                   <TextField
                     required
-                    label="Email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    value={values.email}
-                    error={!!errors.email}
+                    label="Nama"
+                    name="name"
+                    type="name"
+                    autoComplete="name"
+                    value={values.name}
+                    error={!!errors.name}
                     // @ts-ignore
-                    helperText={errors.email}
+                    helperText={errors.name}
                     disabled={isSubmitting}
-                    onChange={(evt) => setFieldValue("email", evt.target.value)}
+                    onChange={(evt) => setFieldValue("name", evt.target.value)}
+                  ></TextField>
+                  <TextField
+                    required
+                    label="NIP"
+                    name="nip"
+                    type="text"
+                    autoComplete="nip"
+                    value={values.nip}
+                    error={!!errors.nip}
+                    // @ts-ignore
+                    helperText={errors.nip}
+                    disabled={isSubmitting}
+                    onChange={(evt) => setFieldValue("nip", evt.target.value)}
                   ></TextField>
                   <FormControl fullWidth>
                     <InputLabel id="l-role">Role</InputLabel>
                     <Select
                       required
+                      readOnly={!!dialogValue.id}
                       labelId="l-role"
                       label="Role"
                       name="role"
@@ -740,7 +831,7 @@ export default function Members(props) {
                           key={role.name}
                           value={role.name.toLowerCase()}
                         >
-                          {role.name}
+                          {role_id[role.name.toLowerCase()]}
                         </MenuItem>
                       ))}
                     </Select>

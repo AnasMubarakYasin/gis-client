@@ -7,6 +7,7 @@ import { TextField as FormikTextField } from "formik-mui";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TouchBackend } from "react-dnd-touch-backend";
+import { format } from "date-fns";
 
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
@@ -41,6 +42,8 @@ import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import EditIcon from "@mui/icons-material/Edit";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import RoomIcon from "@mui/icons-material/Room";
+import FileUploadIcon from "@mui/icons-material/FileUpload";
+import FileOpenIcon from "@mui/icons-material/FileOpen";
 
 // import DialogPassword from "@/components/DialogPassword";
 import AdminShell from "@/layout/AdminShell";
@@ -56,7 +59,7 @@ import {
 import {
   useCreateMutation as useCreateMutationTasks,
   useUpdateMutation as useUpdateMutationTasks,
-} from "@/store/tasks";
+} from "@/store/reports";
 import { useGetAllQuery as useGetAllQuerySupervisors } from "@/store/supervisors";
 // import Loading from "@/layout/Loading";
 
@@ -125,14 +128,14 @@ export default function ProjectsDetail(props) {
   const [get_temp_project, set_temp_project] = useGlobal("project");
   const [get_temp_file, set_temp_file] = useGlobal("project-file");
   const {
-    data: project = { tasks: [] },
+    currentData: project,
     error: errorProject,
     isLoading,
     isFetching,
     isSuccess,
     isError,
     refetch,
-  } = useGetByNameWithTasksQuery(
+  } = useGetByNameQuery(
     { name, token: user.token },
     { skip: name == "Buat Proyek" }
   );
@@ -166,54 +169,52 @@ export default function ProjectsDetail(props) {
       error: errorUpdate,
     },
   ] = useUpdateByIdMutation();
-  const [
-    update_tasks,
-    {
-      isLoading: is_loading_update_tasks,
-      isSuccess: is_success_update_tasks,
-      isError: is_error_update_tasks,
-      error: error_tasks,
-    },
-  ] = useUpdateMutationTasks();
-  const [
-    create_tasks,
-    {
-      data: data_create_tasks,
-      error: error_create_tasks,
-      isLoading: is_loading_create_tasks,
-      isSuccess: is_success_create_tasks,
-      isError: is_error_create_tasks,
-    },
-  ] = useCreateMutationTasks();
+  // const [
+  //   update_tasks,
+  //   {
+  //     isLoading: is_loading_update_tasks,
+  //     isSuccess: is_success_update_tasks,
+  //     isError: is_error_update_tasks,
+  //     error: error_tasks,
+  //   },
+  // ] = useUpdateMutationTasks();
+  // const [
+  //   create_tasks,
+  //   {
+  //     data: data_create_tasks,
+  //     error: error_create_tasks,
+  //     isLoading: is_loading_create_tasks,
+  //     isSuccess: is_success_create_tasks,
+  //     isError: is_error_create_tasks,
+  //   },
+  // ] = useCreateMutationTasks();
   // const { values = {} } = useFormikContext();
-  const [tasks, setTasks] = useState([]);
+  // const [tasks, setTasks] = useState([]);
   // const [supervisors, set_supervisors] = useState([]);
   const [created, setCreated] = useState(false);
-  const [file, setFile] = useState(null);
+  const [fileImage, setFileImage] = useState(null);
+  const [fileProposal, setFileProposal] = useState(null);
   const [image, setImage] = useState("");
-  const [progress, setProgress] = useState({ done: 0, of: 0, percent: 0 });
+  const [proposal, setProposal] = useState("");
+  // const [progress, setProgress] = useState({ done: 0, of: 0, percent: 0 });
   const [isAddTask, setIsAddTask] = useState(false);
-  const mdUp = useMediaQuery(theme.breakpoints.up(theme.breakpoints.values.md));
+  // const mdUp = useMediaQuery(theme.breakpoints.up(theme.breakpoints.values.md));
   const [snack, setSnack] = useState({
     id: "",
     open: false,
     message: <div></div>,
   });
-  const calculateProgress = () => {
-    let done = 0;
-    for (const task of tasks) {
-      task.done && (done += 1);
-    }
-    setProgress({
-      done,
-      of: tasks.length,
-      percent: (done / tasks.length) * 100,
-    });
-  };
-  const handleImage = (event) => {
-    setFile(event.target.files[0]);
-    setImage(URL.createObjectURL(event.target.files[0]));
-  };
+  // const calculateProgress = () => {
+  //   let done = 0;
+  //   for (const task of tasks) {
+  //     task.done && (done += 1);
+  //   }
+  //   setProgress({
+  //     done,
+  //     of: tasks.length,
+  //     percent: (done / tasks.length) * 100,
+  //   });
+  // };
   const handleValidate = (values) => {
     const errors = {};
     if (!values.image) {
@@ -227,11 +228,12 @@ export default function ProjectsDetail(props) {
       const data = Object.assign({}, values, {
         name: values.name.trim(),
         image,
+        proposal,
         fiscal_year: values.fiscal_year + "",
         id_supervisors: values.id_supervisors
           ? values.id_supervisors
           : undefined,
-        contract_date: values.contract_date.toString(),
+        contract_date: format(new Date(values.contract_date), "yyyy-MM-dd"),
         coordinate:
           typeof values.coordinate == "string"
             ? values.coordinate.split(",").map((coord) => +coord)
@@ -247,13 +249,19 @@ export default function ProjectsDetail(props) {
           // @ts-ignore
           id: project.id,
           data,
-          file,
+          image: fileImage,
+          proposal: fileProposal,
           token: user.token,
         });
       } else {
         delete data.tasks;
         data.id_admins = user.account.id;
-        await create({ data, file, token: user.token });
+        await create({
+          data,
+          image: fileImage,
+          proposal: fileProposal,
+          token: user.token,
+        });
       }
     } catch (error) {
       message = (
@@ -270,93 +278,101 @@ export default function ProjectsDetail(props) {
       setSubmitting(false);
     }
   };
-  const handleTasksUpdate = async () => {
-    let message;
-    try {
-      // @ts-ignore
-      if (!project.id) {
-        throw new Error("Create Project First");
-      }
-      const data = [];
-      let count = 1;
-      for (const task of tasks) {
-        const copy = Object.assign({}, task);
-        copy.order = count++;
-        data.push(copy);
-      }
-      await update_tasks({ data, token: user.token });
-    } catch (error) {
-      message = (
-        <Alert elevation={6} severity="error">
-          {error.message}
-        </Alert>
-      );
-      setSnack((prev) => ({
-        ...prev,
-        open: true,
-        message,
-      }));
-    }
-  };
-  const handleIsAddTask = (event) => {
-    setIsAddTask(!isAddTask);
-  };
+  // const handleTasksUpdate = async () => {
+  //   let message;
+  //   try {
+  //     // @ts-ignore
+  //     if (!project.id) {
+  //       throw new Error("Create Project First");
+  //     }
+  //     const data = [];
+  //     let count = 1;
+  //     for (const task of tasks) {
+  //       const copy = Object.assign({}, task);
+  //       copy.order = count++;
+  //       data.push(copy);
+  //     }
+  //     await update_tasks({ data, token: user.token });
+  //   } catch (error) {
+  //     message = (
+  //       <Alert elevation={6} severity="error">
+  //         {error.message}
+  //       </Alert>
+  //     );
+  //     setSnack((prev) => ({
+  //       ...prev,
+  //       open: true,
+  //       message,
+  //     }));
+  //   }
+  // };
+  // const handleIsAddTask = (event) => {
+  //   setIsAddTask(!isAddTask);
+  // };
   // const handleCloseAddTask = (values) => {};
-  const handleAddTask = async (values, { setSubmitting }) => {
-    const data = Object.assign(
-      // @ts-ignore
-      { id_projects: project.id, order: 1, done: false },
-      values
-    );
-    await create_tasks({ data, token: user.token });
-  };
-  const handleTaskEdit = (index) => (event) => {
-    const copy = Array.of(...tasks);
-    const task = copy[index];
-    if (task) {
-      copy.splice(
-        index,
-        1,
-        Object.assign({}, task, { note: event.target.value })
-      );
-      // copy.done = !task.done;
-      setTasks(copy);
-    }
-  };
-  const handleTaskDone = (index) => (event) => {
-    const copy = Array.of(...tasks);
-    const task = copy[index];
-    if (task) {
-      copy.splice(index, 1, Object.assign({}, task, { done: !task.done }));
-      setTasks(copy);
-    }
-  };
-  const handleTaskSwitch = ({ drag, drop }) => {
-    const currTask = tasks.findIndex((task) => task.id == drag.id);
-    const nextTask = tasks.findIndex((task) => task.id == drop.id);
-    const prevTask = Object.assign({}, tasks[nextTask]);
-    const nextOrder = tasks[nextTask].order;
-    tasks[nextTask] = Object.assign({}, tasks[currTask]);
-    tasks[currTask] = prevTask;
-    tasks[nextTask].order = prevTask.order;
-    prevTask.order = nextOrder;
-    setTasks(Array.of(...tasks));
-  };
+  // const handleAddTask = async (values, { setSubmitting }) => {
+  //   const data = Object.assign(
+  //     // @ts-ignore
+  //     { id_projects: project.id, order: 1, done: false },
+  //     values
+  //   );
+  //   await create_tasks({ data, token: user.token });
+  // };
+  // const handleTaskEdit = (index) => (event) => {
+  //   const copy = Array.of(...tasks);
+  //   const task = copy[index];
+  //   if (task) {
+  //     copy.splice(
+  //       index,
+  //       1,
+  //       Object.assign({}, task, { note: event.target.value })
+  //     );
+  //     // copy.done = !task.done;
+  //     setTasks(copy);
+  //   }
+  // };
+  // const handleTaskDone = (index) => (event) => {
+  //   const copy = Array.of(...tasks);
+  //   const task = copy[index];
+  //   if (task) {
+  //     copy.splice(index, 1, Object.assign({}, task, { done: !task.done }));
+  //     setTasks(copy);
+  //   }
+  // };
+  // const handleTaskSwitch = ({ drag, drop }) => {
+  //   const currTask = tasks.findIndex((task) => task.id == drag.id);
+  //   const nextTask = tasks.findIndex((task) => task.id == drop.id);
+  //   const prevTask = Object.assign({}, tasks[nextTask]);
+  //   const nextOrder = tasks[nextTask].order;
+  //   tasks[nextTask] = Object.assign({}, tasks[currTask]);
+  //   tasks[currTask] = prevTask;
+  //   tasks[nextTask].order = prevTask.order;
+  //   prevTask.order = nextOrder;
+  //   setTasks(Array.of(...tasks));
+  // };
   const handleSnackClose = (event, reason) => {
     setSnack((prev) => ({ ...prev, open: false }));
   };
   const handleSelectMap = (values) => {
     return () => {
-      console.log(values);
+      // console.log(values);
       set_temp_project(values);
-      set_temp_file({ image, file });
+      set_temp_file({ image, proposal, fileImage, fileProposal });
       router.push("/admin/projects/pin");
     };
   };
+  const handleImage = (event) => {
+    setFileImage(event.target.files[0]);
+    setImage(URL.createObjectURL(event.target.files[0]));
+  };
+  const handleProposal = (event) => {
+    setFileProposal(event.target.files[0]);
+    setProposal(event.target.files[0].name);
+  };
 
   useEffect(() => {
-    ctx_admin.set_loader(isCreating || isUpdating || is_loading_update_tasks);
-  }, [isCreating, isUpdating, is_loading_update_tasks]);
+    ctx_admin.set_loader(isCreating || isUpdating);
+  }, [isCreating, isUpdating]);
   useEffect(function () {
     ctx_admin.set_ctx_data({
       // @ts-ignore
@@ -365,13 +381,15 @@ export default function ProjectsDetail(props) {
     });
     const temp_file = get_temp_file();
     if (temp_file) {
-      setFile(temp_file.file);
+      setFileImage(temp_file.fileImage);
+      setFileProposal(temp_file.fileProposal);
       setImage(temp_file.image);
+      setProposal(temp_file.proposal);
     }
-  });
-  useEffect(() => {
-    calculateProgress();
-  }, [tasks]);
+  }, []);
+  // useEffect(() => {
+  //   calculateProgress();
+  // }, [tasks]);
   useEffect(() => {
     if (isSuccess) {
       // @ts-ignore
@@ -382,16 +400,16 @@ export default function ProjectsDetail(props) {
         title: exists ? project.name : "Create Project",
         active_link: "/admin/projects",
       });
-      if (project) {
-        if (!image) {
-          // @ts-ignore
-          setImage(project.image);
-        }
-        if (!tasks.length) {
-          // @ts-ignore
-          setTasks(Array.of(...project.tasks));
-        }
-      }
+      // @ts-ignore
+      setImage(project?.image);
+      // @ts-ignore
+      setProposal(project?.proposal);
+      // if (exists) {
+      //   // @ts-ignore
+      //   setImage(project.image);
+      //   // @ts-ignore
+      //   setProposal(project.proposal);
+      // }
       setSnack((prev) => ({ ...prev, id: "get", open: false }));
     }
     if (isError) {
@@ -462,6 +480,12 @@ export default function ProjectsDetail(props) {
           </Alert>
         ),
       }));
+      // // console.log(project, name);
+      // // @ts-ignore
+      // if (project.name != name) {
+      //   // @ts-ignore
+      //   router.replace(project.name);
+      // }
     }
     if (isErrorUpdating) {
       // @ts-ignore
@@ -482,73 +506,73 @@ export default function ProjectsDetail(props) {
       }));
     }
   }, [isSuccessUpdating, isErrorUpdating]);
-  useEffect(() => {
-    if (is_success_create_tasks) {
-      setIsAddTask(false);
-      setTasks(
-        Array.of(data_create_tasks, ...tasks).sort((a, b) => a.order - b.order)
-      );
-      setSnack((prev) => ({
-        ...prev,
-        open: true,
-        message: (
-          <Alert elevation={6} severity="success">
-            Success Create Task
-          </Alert>
-        ),
-      }));
-    }
-    if (is_error_create_tasks) {
-      // @ts-ignore
-      if (error_create_tasks.status == 401) {
-        ctx_auth.open_signin(true);
-      }
-      setSnack((prev) => ({
-        ...prev,
-        open: true,
-        message: (
-          <Alert elevation={6} severity="error">
-            {
-              // @ts-ignore
-              error_create_tasks.data.message
-            }
-          </Alert>
-        ),
-      }));
-    }
-  }, [is_success_create_tasks, is_error_create_tasks]);
-  useEffect(() => {
-    if (is_success_update_tasks) {
-      refetch();
-      setSnack((prev) => ({
-        ...prev,
-        open: true,
-        message: (
-          <Alert elevation={6} severity="success">
-            Success Update Tasks
-          </Alert>
-        ),
-      }));
-    }
-    if (is_error_update_tasks) {
-      // @ts-ignore
-      if (error_tasks.status == 401) {
-        ctx_auth.open_signin(true);
-      }
-      setSnack((prev) => ({
-        ...prev,
-        open: true,
-        message: (
-          <Alert elevation={6} severity="error">
-            {
-              // @ts-ignore
-              error_tasks.data.message
-            }
-          </Alert>
-        ),
-      }));
-    }
-  }, [is_success_update_tasks, is_error_update_tasks]);
+  // useEffect(() => {
+  //   if (is_success_create_tasks) {
+  //     setIsAddTask(false);
+  //     setTasks(
+  //       Array.of(data_create_tasks, ...tasks).sort((a, b) => a.order - b.order)
+  //     );
+  //     setSnack((prev) => ({
+  //       ...prev,
+  //       open: true,
+  //       message: (
+  //         <Alert elevation={6} severity="success">
+  //           Success Create Task
+  //         </Alert>
+  //       ),
+  //     }));
+  //   }
+  //   if (is_error_create_tasks) {
+  //     // @ts-ignore
+  //     if (error_create_tasks.status == 401) {
+  //       ctx_auth.open_signin(true);
+  //     }
+  //     setSnack((prev) => ({
+  //       ...prev,
+  //       open: true,
+  //       message: (
+  //         <Alert elevation={6} severity="error">
+  //           {
+  //             // @ts-ignore
+  //             error_create_tasks.data.message
+  //           }
+  //         </Alert>
+  //       ),
+  //     }));
+  //   }
+  // }, [is_success_create_tasks, is_error_create_tasks]);
+  // useEffect(() => {
+  //   if (is_success_update_tasks) {
+  //     refetch();
+  //     setSnack((prev) => ({
+  //       ...prev,
+  //       open: true,
+  //       message: (
+  //         <Alert elevation={6} severity="success">
+  //           Success Update Tasks
+  //         </Alert>
+  //       ),
+  //     }));
+  //   }
+  //   if (is_error_update_tasks) {
+  //     // @ts-ignore
+  //     if (error_tasks.status == 401) {
+  //       ctx_auth.open_signin(true);
+  //     }
+  //     setSnack((prev) => ({
+  //       ...prev,
+  //       open: true,
+  //       message: (
+  //         <Alert elevation={6} severity="error">
+  //           {
+  //             // @ts-ignore
+  //             error_tasks.data.message
+  //           }
+  //         </Alert>
+  //       ),
+  //     }));
+  //   }
+  // }, [is_success_update_tasks, is_error_update_tasks]);
 
   return (
     <>
@@ -671,7 +695,7 @@ export default function ProjectsDetail(props) {
                   contract_number: "",
                   contract_date: null,
                   activity: "",
-                  obstacles: "",
+                  // obstacles: "",
                   status: "",
                   progress: "",
                   fiscal_year: "",
@@ -679,6 +703,7 @@ export default function ProjectsDetail(props) {
                   coordinate: "",
                   address: "",
                   id_supervisors: "",
+                  proposal: "",
                 },
                 project,
                 get_temp_project()
@@ -706,7 +731,7 @@ export default function ProjectsDetail(props) {
                     }}
                   >
                     <Box display="grid" sx={{ placeItems: "center" }}>
-                      <Box
+                      <Button
                         component="label"
                         htmlFor="input-image"
                         sx={{
@@ -717,47 +742,46 @@ export default function ProjectsDetail(props) {
                           },
                         }}
                       >
-                        <Input
-                          // @ts-ignore
+                        <input
+                          hidden
                           accept="image/*"
                           id="input-image"
                           name="image"
                           type="file"
-                          sx={{ display: "none" }}
                           onChange={(e) => {
                             handleImage(e);
                             setFieldValue("image", e.target.value);
                           }}
                           disabled={isSubmitting}
                         />
-                        <Button
+                        {/* <Button
                           color="primary"
                           aria-label="upload picture"
                           component="span"
                           disabled={isSubmitting}
                           sx={{ width: "100%" }}
+                        > */}
+                        <Avatar
+                          id="output-image"
+                          variant="rounded"
+                          // @ts-ignore
+                          alt={name}
+                          src={image}
+                          sx={{
+                            width: "100%",
+                            height: "auto",
+                            aspectRatio: "4 / 3",
+                            objectFit: "contain",
+                            objectPosition: "center",
+                            opacity: isSubmitting ? ".7" : "1",
+                          }}
                         >
-                          <Avatar
-                            id="output-image"
-                            variant="rounded"
-                            // @ts-ignore
-                            alt={name}
-                            src={image}
-                            sx={{
-                              width: "100%",
-                              height: "auto",
-                              aspectRatio: "4 / 3",
-                              objectFit: "contain",
-                              objectPosition: "center",
-                              opacity: isSubmitting ? ".7" : "1",
-                            }}
-                          >
-                            <PhotoCameraIcon
-                              sx={{ width: "44px", height: "44px" }}
-                            />
-                          </Avatar>
-                        </Button>
-                      </Box>
+                          <PhotoCameraIcon
+                            sx={{ width: "44px", height: "44px" }}
+                          />
+                        </Avatar>
+                        {/* </Button> */}
+                      </Button>
                       <FormHelperText error={!!errors.image}>
                         {errors.image ? errors.image + "" : ""}
                       </FormHelperText>
@@ -825,7 +849,7 @@ export default function ProjectsDetail(props) {
                         minRows={3}
                         required
                       />
-                      <Field
+                      {/* <Field
                         component={FormikTextField}
                         variant="outlined"
                         name="obstacles"
@@ -834,7 +858,7 @@ export default function ProjectsDetail(props) {
                         multiline
                         minRows={3}
                         required
-                      />
+                      /> */}
                       <FormControl fullWidth>
                         <InputLabel id="status" required>
                           Status
@@ -910,9 +934,9 @@ export default function ProjectsDetail(props) {
                           value={values.coordinate}
                           error={!!errors.coordinate}
                           disabled={isSubmitting}
-                          onChange={(evt) =>
-                            setFieldValue("coordinate", evt.target.value)
-                          }
+                          // onChange={(evt) =>
+                          //   setFieldValue("coordinate", evt.target.value)
+                          // }
                           endAdornment={
                             <InputAdornment position="end">
                               <IconButton
@@ -938,6 +962,44 @@ export default function ProjectsDetail(props) {
                         label="Alamat"
                         required
                       />
+                      <FormControl variant="outlined">
+                        <InputLabel htmlFor="proposal" required>
+                          Proposal
+                        </InputLabel>
+                        <OutlinedInput
+                          id="proposal"
+                          label="Proposal"
+                          name="proposal"
+                          type="text"
+                          value={proposal}
+                          error={!!errors.proposal}
+                          disabled={isSubmitting}
+                          // onChange={(evt) =>
+                          //   setFieldValue("proposal", evt.target.value)
+                          // }
+                          endAdornment={
+                            <InputAdornment position="end">
+                              <IconButton
+                                component="label"
+                                aria-label="upload proposal"
+                                disabled={isSubmitting}
+                                edge="end"
+                              >
+                                <input
+                                  hidden
+                                  accept="application/pdf"
+                                  type="file"
+                                  onChange={handleProposal}
+                                />
+                                <FileOpenIcon />
+                              </IconButton>
+                            </InputAdornment>
+                          }
+                        />
+                        <FormHelperText>
+                          {errors.proposal ? errors.proposal + "" : ""}
+                        </FormHelperText>
+                      </FormControl>
                       <FormControl fullWidth>
                         <InputLabel id="id_supervisors">Pengawas</InputLabel>
                         <Select
@@ -986,7 +1048,7 @@ export default function ProjectsDetail(props) {
             </Formik>
           )}
         </Paper>
-        {created && (
+        {/* {created && (
           <Box display="grid" gap="16px">
             <Box display="flex" justifyContent="space-between">
               <Typography variant="h4">Proses</Typography>
@@ -1256,15 +1318,8 @@ export default function ProjectsDetail(props) {
               )}
             </Box>
           </Box>
-        )}
+        )} */}
       </Box>
-      {/* <DialogPassword
-        open={openDialogPass}
-        onSubmit={handleAuth}
-        onClose={() => setOpenDialogPass(false)}
-        // values={{}}
-        errors={isErrorSignin ? { password: errorSignin.data.message } : {}}
-      ></DialogPassword> */}
       <Snackbar
         key={snack.id}
         open={snack.open}

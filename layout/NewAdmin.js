@@ -42,6 +42,9 @@ import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import GroupIcon from "@mui/icons-material/Group";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import WorkspacesIcon from "@mui/icons-material/Workspaces";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 import Footer from "@/components/Footer";
 
@@ -53,10 +56,15 @@ import { useForceUpdate } from "@/lib/helper-ui";
 
 const drawerWidth = 240;
 const drawerNavigation = [
-  { text: "Dashboard", icon: <DashboardIcon />, link: "/admin/dashboard" },
+  {
+    text: "Dashboard",
+    icon: <DashboardRoundedIcon />,
+    link: "/admin/dashboard",
+  },
   { text: "Projects", icon: <GridViewRoundedIcon />, link: "/admin/projects" },
   // { text: "Team", icon: <PersonIcon />, link: "/admin/team" },
   // { text: "Roles", icon: <WorkspacesIcon />, link: "/admin/roles" },
+  { text: "Reports", icon: <AssignmentIcon />, link: "/admin/reports" },
   { text: "Members", icon: <GroupIcon />, link: "/admin/members" },
   // { text: "Sign In", icon: <LoginIcon />, link: "/admin/signin" },
   // { text: "Sign Up", icon: <AssignmentIndIcon />, link: "/admin/signup" },
@@ -232,10 +240,22 @@ export default function Admin(props) {
               >
                 {openDrawer ? <MenuOpenIcon /> : <MenuIcon />}
               </IconButton>
-              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  textAlign: "left",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "-webkit-box",
+                  WebkitLineClamp: "1",
+                  WebkitBoxOrient: "vertical",
+                  flexGrow: 1,
+                }}
+              >
                 {ctx_data.title}
               </Typography>
-              <div>
+              <Box sx={{ display: { xs: "none", sm: "flex" } }}>
                 <Tooltip title="Refresh">
                   <IconButton
                     size="large"
@@ -269,9 +289,22 @@ export default function Admin(props) {
                     <NotificationsIcon></NotificationsIcon>
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Account">
+              </Box>
+              <Box sx={{ display: { xs: "flex", sm: "none" } }}>
+                <Tooltip title="More Menu">
                   <IconButton
                     size="large"
+                    aria-label="More Menu"
+                    color="inherit"
+                  >
+                    <MoreVertIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <div>
+                <Tooltip title="Account">
+                  <IconButton
+                    size="small"
                     aria-label="account of current user"
                     aria-controls="menu-appbar"
                     aria-haspopup="true"
@@ -413,7 +446,10 @@ export default function Admin(props) {
             open={openDrawer}
             mdup={mdUp}
           >
-            <DrawerHeader></DrawerHeader>
+            {/* <AppBar open elevation={0}>
+              <Toolbar></Toolbar>
+            </AppBar> */}
+            <DrawerHeader />
             <Box component="main" flexGrow="1">
               {loaderProgress.show && (
                 <>

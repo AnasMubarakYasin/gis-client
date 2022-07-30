@@ -122,7 +122,7 @@ export default function Profile(props) {
   function handle_validate() {}
   function handle_submit(values, { setSubmitting }) {
     const data = Object.assign({}, values);
-    update({ id: user.account.id, data, image: image.file, token: user.token });
+    update({ data, image: image.file, token: user.token });
     setSubmitting(false);
   }
 
@@ -186,16 +186,20 @@ export default function Profile(props) {
                           },
                         }}
                       >
-                        <Input
-                          // @ts-ignore
+                        <input
+                          hidden
                           accept="image/*"
                           id="input-image"
                           name="image"
                           type="file"
-                          sx={{ display: "none" }}
                           onChange={(e) => {
-                            handle_image(e);
-                            setFieldValue("image", e.target.value);
+                            if (e.target.files.length) {
+                              handle_image(e);
+                              setFieldValue(
+                                "image",
+                                URL.createObjectURL(e.target.files[0])
+                              );
+                            }
                           }}
                           disabled={isSubmitting}
                         />
@@ -210,8 +214,8 @@ export default function Profile(props) {
                             id="output-image"
                             variant="rounded"
                             // @ts-ignore
-                            alt={values.username}
-                            src={image.src}
+                            alt={values.name}
+                            src={values.image}
                             sx={{
                               width: "100%",
                               height: "auto",
@@ -241,25 +245,38 @@ export default function Profile(props) {
                       error={!!errors.username}
                       // @ts-ignore
                       helperText={errors.username}
+                      // disabled={isSubmitting}
+                      // onChange={(evt) =>
+                      //   setFieldValue("username", evt.target.value)
+                      // }
+                    ></TextField>
+                    <TextField
+                      required
+                      label="Name"
+                      name="name"
+                      type="name"
+                      autoComplete="name"
+                      value={values.name}
+                      error={!!errors.name}
+                      // @ts-ignore
+                      helperText={errors.name}
                       disabled={isSubmitting}
                       onChange={(evt) =>
-                        setFieldValue("username", evt.target.value)
+                        setFieldValue("name", evt.target.value)
                       }
                     ></TextField>
                     <TextField
                       required
-                      label="Email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      value={values.email}
-                      error={!!errors.email}
+                      label="NIP"
+                      name="nip"
+                      type="text"
+                      autoComplete="nip"
+                      value={values.nip}
+                      error={!!errors.nip}
                       // @ts-ignore
-                      helperText={errors.email}
+                      helperText={errors.nip}
                       disabled={isSubmitting}
-                      onChange={(evt) =>
-                        setFieldValue("email", evt.target.value)
-                      }
+                      onChange={(evt) => setFieldValue("nip", evt.target.value)}
                     ></TextField>
                     <TextField
                       required

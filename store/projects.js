@@ -11,19 +11,37 @@ export const projectsApi = createApi({
   endpoints: (builder) => ({
     getAll: builder.query({
       keepUnusedDataFor: 0,
-      query: (/* { token } */) => ({
+      query: ({ token }) => ({
         url: "",
-        // headers: { authorization: `Bearer ${token}` },
+        headers: { authorization: `Bearer ${token}` },
+      }),
+      // providesTags: (result, error) => [{ type: "All" }],
+    }),
+    getAllPublic: builder.query({
+      keepUnusedDataFor: 0,
+      query: () => ({
+        url: "/public",
       }),
       // providesTags: (result, error) => [{ type: "All" }],
     }),
     getByName: builder.query({
       keepUnusedDataFor: 0,
-      query: ({ name, token }) => ({
-        url: `name/${name}`,
-        headers: { authorization: `Bearer ${token}` },
-      }),
-      // providesTags: (result, error, name) => [{ type: "Name", name }],
+      async queryFn({ name, token }, queryApi, extraOptions, baseQuery) {
+        if (!name) {
+          return {
+            error: {
+              error: "project not found",
+              status: "CUSTOM_ERROR",
+              data: { message: "project not found", code: 401 },
+            },
+          };
+        }
+        const res = await baseQuery({
+          url: `name/${name}`,
+          headers: { authorization: `Bearer ${token}` },
+        });
+        return res.data ? { data: res.data } : { error: res.error };
+      },
     }),
     getByNameWithTasks: builder.query({
       async queryFn({ name, token }, queryApi, extraOptions, baseQuery) {
@@ -50,17 +68,52 @@ export const projectsApi = createApi({
       // providesTags: (result, error, name) => [{ type: "Name", name }],
     }),
     create: builder.mutation({
-      async queryFn({ data, file, token }, queryApi, extraOptions, baseQuery) {
-        const res_img = await baseQuery({
-          url: `/image`,
-          method: "POST",
-          headers: { authorization: `Bearer ${token}` },
-          body: file,
-        });
-        if (res_img.error) {
-          return { error: res_img.error };
+      async queryFn(
+        { data, image, proposal, token },
+        queryApi,
+        extraOptions,
+        baseQuery
+      ) {
+        const res_img = await fetch(
+          `/api/v1/resources/projects/pictures/${
+            data.name
+          }.${image.type.replace(/.*\//, "")}`,
+          {
+            method: "POST",
+            headers: { authorization: `Bearer ${token}` },
+            body: image,
+          }
+        );
+        const res_doc = await fetch(
+          `/api/v1/resources/projects/documents/${
+            data.name
+          }.${image.type.replace(/.*\//, "")}`,
+          {
+            method: "POST",
+            headers: { authorization: `Bearer ${token}` },
+            body: proposal,
+          }
+        );
+        if (!res_img.ok) {
+          return {
+            error: {
+              error: res_img.statusText,
+              status: "CUSTOM_ERROR",
+              data: { message: await res_img.json(), code: res_img.status },
+            },
+          };
         }
-        data.image = res_img.data;
+        if (!res_doc.ok) {
+          return {
+            error: {
+              error: res_doc.statusText,
+              status: "CUSTOM_ERROR",
+              data: { message: await res_doc.json(), code: res_doc.status },
+            },
+          };
+        }
+        data.image = await res_img.json();
+        data.proposal = await res_doc.json();
         const res = await baseQuery({
           url: "/create",
           method: "POST",
@@ -71,24 +124,80 @@ export const projectsApi = createApi({
       },
       // invalidatesTags: ["Patch/id"],
     }),
-    updateById: builder.mutation({
+    getById: builder.query({
+      keepUnusedDataFor: 0,
       async queryFn(
-        { id, data, file, token },
+        { id, includes = [], token },
         queryApi,
         extraOptions,
         baseQuery
       ) {
-        if (file) {
-          const res_img = await baseQuery({
-            url: `/image`,
-            method: "POST",
-            headers: { authorization: `Bearer ${token}` },
-            body: file,
-          });
-          if (res_img.error) {
-            return { error: res_img.error };
+        if (!id) {
+          return {
+            error: {
+              error: "id project not exist",
+              status: "CUSTOM_ERROR",
+              data: { message: "id project not exist", code: 404 },
+            },
+          };
+        }
+        const res = baseQuery({
+          url: `/${id}?${includes.map((rel) => "includes=" + rel).join("&")}`,
+          headers: { authorization: `Bearer ${token}` },
+        });
+        return res;
+      },
+    }),
+    updateById: builder.mutation({
+      async queryFn(
+        { id, data, image, proposal, token },
+        queryApi,
+        extraOptions,
+        baseQuery
+      ) {
+        if (image) {
+          const res_img = await fetch(
+            `/api/v1/resources/projects/pictures/${
+              data.name
+            }.${image.type.replace(/.*\//, "")}`,
+            {
+              method: "POST",
+              headers: { authorization: `Bearer ${token}` },
+              body: image,
+            }
+          );
+          if (!res_img.ok) {
+            return {
+              error: {
+                error: res_img.statusText,
+                status: "CUSTOM_ERROR",
+                data: { message: await res_img.json(), code: res_img.status },
+              },
+            };
           }
-          data.image = res_img.data;
+          data.image = await res_img.json();
+        }
+        if (proposal) {
+          const res_doc = await fetch(
+            `/api/v1/resources/projects/documents/${
+              data.name
+            }.${image.type.replace(/.*\//, "")}`,
+            {
+              method: "POST",
+              headers: { authorization: `Bearer ${token}` },
+              body: proposal,
+            }
+          );
+          if (!res_doc.ok) {
+            return {
+              error: {
+                error: res_doc.statusText,
+                status: "CUSTOM_ERROR",
+                data: { message: await res_doc.json(), code: res_doc.status },
+              },
+            };
+          }
+          data.proposal = await res_doc.json();
         }
         const res = await baseQuery({
           url: `/${id}`,
@@ -111,10 +220,12 @@ export const projectsApi = createApi({
 });
 
 export const {
+  useGetAllPublicQuery,
   useGetAllQuery,
   useGetByNameQuery,
   useGetByNameWithTasksQuery,
   useCreateMutation,
+  useGetByIdQuery,
   useUpdateByIdMutation,
   useDeleteByIdMutation,
 } = projectsApi;

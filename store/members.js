@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const membersApi = createApi({
   reducerPath: "membersApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `/api/v1/members`,
+    baseUrl: `/api/v1/users`,
   }),
   endpoints: (builder) => ({
     getById: builder.query({
@@ -22,12 +22,34 @@ export const membersApi = createApi({
     }),
 
     create: builder.mutation({
-      query: ({ data, token }) => ({
-        url: "",
-        method: "POST",
-        headers: { authorization: `Bearer ${token}` },
-        body: data,
-      }),
+      async queryFn({ data, image, token }, queryApi, extraOptions, baseQuery) {
+        const url_img = `/api/v1/resources/${data.role}s/pictures/${
+          data.username
+        }.${image.type.replace(/.*\//, "")}`;
+        const res_img = await fetch(url_img, {
+          method: "POST",
+          // @ts-ignore
+          headers: { authorization: `Bearer ${token}` },
+          body: image,
+        });
+        if (!res_img.ok) {
+          return {
+            error: {
+              error: res_img.statusText,
+              status: res_img.status,
+              data: "",
+            },
+          };
+        }
+        data.image = await res_img.json();
+        const res = await baseQuery({
+          url: "/signup",
+          method: "POST",
+          headers: { authorization: `Bearer ${token}` },
+          body: data,
+        });
+        return res;
+      },
     }),
     signin: builder.mutation({
       query: ({ data }) => ({
@@ -74,26 +96,30 @@ export const membersApi = createApi({
     }),
 
     updateById: builder.mutation({
-      async queryFn(
-        { id, data, image, token },
-        queryApi,
-        extraOptions,
-        baseQuery
-      ) {
+      async queryFn({ data, image, token }, queryApi, extraOptions, baseQuery) {
         if (image) {
-          const res_img = await baseQuery({
-            url: `/image`,
+          const url_img = `/api/v1/resources/${data.role}s/pictures/${
+            data.username
+          }.${image.type.replace(/.*\//, "")}`;
+          const res_img = await fetch(url_img, {
             method: "POST",
+            // @ts-ignore
             headers: { authorization: `Bearer ${token}` },
             body: image,
           });
-          if (res_img.error) {
-            return res_img;
+          if (!res_img.ok) {
+            return {
+              error: {
+                error: res_img.statusText,
+                status: res_img.status,
+                data: "",
+              },
+            };
           }
-          data.image = res_img.data;
+          data.image = await res_img.json();
         }
         const res = await baseQuery({
-          url: `/${id}`,
+          url: ``,
           method: "PATCH",
           headers: { authorization: `Bearer ${token}` },
           body: data,
@@ -109,12 +135,15 @@ export const membersApi = createApi({
       }),
     }),
     removeMany: builder.mutation({
-      query: ({ data, token }) => ({
-        url: "",
-        method: "DELETE",
-        headers: { authorization: `Bearer ${token}` },
-        body: data,
-      }),
+      async queryFn({ data, token }, queryApi, extraOptions, baseQuery) {
+        const res = await baseQuery({
+          url: ``,
+          method: "DELETE",
+          headers: { authorization: `Bearer ${token}` },
+          body: data,
+        });
+        return res;
+      },
     }),
   }),
 });

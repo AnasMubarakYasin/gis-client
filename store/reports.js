@@ -1,32 +1,39 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-export const tasksApi = createApi({
-  reducerPath: "tasksApi",
+export const reportsApi = createApi({
+  reducerPath: "reportsApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `/api/v1/tasks`,
+    baseUrl: `/api/v1/reports`,
   }),
   endpoints: (builder) => ({
-    getById: builder.query({
+    get: builder.query({
       keepUnusedDataFor: 1,
-      query: ({ id, token }) => ({
-        url: `/${id}`,
+      query: ({ data, token }) => ({
+        url: "",
         headers: { authorization: `Bearer ${token}` },
       }),
     }),
     create: builder.mutation({
       query: ({ data, token }) => ({
-        url: "/create",
+        url: "",
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
         body: data,
       }),
     }),
-    update: builder.mutation({
+    delete: builder.mutation({
       query: ({ data, token }) => ({
         url: "",
-        method: "PATCH",
+        method: "DELETE",
         headers: { authorization: `Bearer ${token}` },
         body: data,
+      }),
+    }),
+    getById: builder.query({
+      keepUnusedDataFor: 1,
+      query: ({ id, token }) => ({
+        url: `/${id}`,
+        headers: { authorization: `Bearer ${token}` },
       }),
     }),
     updateById: builder.mutation({
@@ -48,8 +55,10 @@ export const tasksApi = createApi({
 });
 
 export const {
+  useGetQuery,
   useGetByIdQuery,
   useCreateMutation,
-  useUpdateMutation,
+  useDeleteMutation,
   useUpdateByIdMutation,
-} = tasksApi;
+  useDeleteByIdMutation,
+} = reportsApi;
