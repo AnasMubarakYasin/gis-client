@@ -1,7 +1,8 @@
 module.exports = {
   apps: [
     {
-      name: "gis-client",
+      name: "client",
+      namespace: "gis",
       script: "npx",
       args: "next start",
       cwd: ".",
