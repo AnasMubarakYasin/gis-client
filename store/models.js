@@ -22,22 +22,30 @@ export const modelsApi = createApi({
     }),
     get: builder.query({
       keepUnusedDataFor: 1,
-      query: ({ data, token }) => ({
-        url: "",
+      query: ({ model, data, token }) => ({
+        url: `/${model}`,
         headers: { authorization: `Bearer ${token}` },
       }),
     }),
     create: builder.mutation({
-      query: ({ data, token }) => ({
-        url: "",
+      query: ({ model, data, token }) => ({
+        url: `/${model}`,
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
         body: data,
       }),
     }),
+    update: builder.mutation({
+      query: ({ model, data, token }) => ({
+        url: `/${model}`,
+        method: "PATCH",
+        headers: { authorization: `Bearer ${token}` },
+        body: data,
+      }),
+    }),
     delete: builder.mutation({
-      query: ({ data, token }) => ({
-        url: "",
+      query: ({ model, data, token }) => ({
+        url: `/${model}`,
         method: "DELETE",
         headers: { authorization: `Bearer ${token}` },
         body: data,
@@ -74,6 +82,7 @@ export const {
   useGetQuery,
   useGetByIdQuery,
   useCreateMutation,
+  useUpdateMutation,
   useDeleteMutation,
   useUpdateByIdMutation,
   useDeleteByIdMutation,

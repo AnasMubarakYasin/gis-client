@@ -436,15 +436,15 @@ export default function Reports(props) {
                       <Typography
                         variant="h6"
                         component="div"
-                        // sx={{
-                        //   height: "4rem",
-                        //   textAlign: "left",
-                        //   overflow: "hidden",
-                        //   textOverflow: "ellipsis",
-                        //   display: "-webkit-box",
-                        //   WebkitLineClamp: "2",
-                        //   WebkitBoxOrient: "vertical",
-                        // }}
+                        sx={{
+                          height: "4rem",
+                          textAlign: "left",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: "2",
+                          WebkitBoxOrient: "vertical",
+                        }}
                       >
                         {item.name}
                       </Typography>

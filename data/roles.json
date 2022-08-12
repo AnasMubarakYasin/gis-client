@@ -6,12 +6,6 @@
     "access": {}
   },
   {
-    "id": "c",
-    "name": "Officer",
-    "index": "Officer",
-    "access": {}
-  },
-  {
     "id": "a",
     "name": "Admin",
     "index": "Admin",

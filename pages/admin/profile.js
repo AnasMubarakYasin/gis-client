@@ -82,15 +82,15 @@ export default function Profile(props) {
       }));
     } else if (is_updating_error) {
       // @ts-ignore
-      if (errorCreating.status == 401) {
+      if (error_update.status == 401) {
         ctx_auth.open_signin(true);
       }
       // @ts-ignore
-      const message = errorCreating.error
+      const message = error_update.error
         ? // @ts-ignore
-          errorCreating.error
+          error_update.error
         : // @ts-ignore
-          errorCreating.data.message;
+          error_update.data.message;
       setSnack((prev) => ({
         ...prev,
         open: true,

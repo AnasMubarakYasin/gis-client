@@ -85,54 +85,6 @@ const StyledTreeItem = styled((props) => <TreeItem {...props} />)(
   })
 );
 
-const reports = [
-  {
-    id: 1,
-    activity: "",
-    name: "",
-    name_company: "",
-    supervisor: "",
-    description: {},
-    published_at: new Date(),
-  },
-  {
-    id: 2,
-    activity: "",
-    name: "",
-    name_company: "",
-    supervisor: "",
-    description: {},
-    published_at: new Date(Date.now() - 1000 * 60 * 60 * 24),
-  },
-  {
-    id: 3,
-    activity: "",
-    name: "",
-    name_company: "",
-    supervisor: "",
-    description: {},
-    published_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-  },
-  {
-    id: 4,
-    activity: "",
-    name: "",
-    name_company: "",
-    supervisor: "",
-    description: {},
-    published_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
-  },
-  {
-    id: 5,
-    activity: "",
-    name: "",
-    name_company: "",
-    supervisor: "",
-    description: {},
-    published_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
-  },
-];
-
 export default function Reports(props) {
   const router = useRouter();
   const theme = useTheme();
@@ -220,7 +172,7 @@ export default function Reports(props) {
       // @ts-ignore
       id_projects: project.id,
       project_copy: project,
-      reported_at: format(new Date(), "yyyy-MM-dd"),
+      reported_at: format(Date.now(), "yyyy-MM-dd"),
     });
     const token = user.token;
     if (dialogValue.id) {
@@ -351,7 +303,9 @@ export default function Reports(props) {
             return 0;
           });
           const report = reports.pop();
-          if (new Date().getDate() <= new Date(report.reported_at).getDate()) {
+          const today = format(Date.now(), "yyyy-MM-dd");
+          console.log(new Date(report.reported_at), new Date(today));
+          if (new Date(report.reported_at) >= new Date(today)) {
             setSnack({
               ...snack,
               open: true,
@@ -391,15 +345,17 @@ export default function Reports(props) {
         switch (func) {
           case "getFullYear":
             if (value in result) {
+              continue;
             } else {
               result[value] = { text: `Tahun ${value}`, childs: {}, index };
             }
             break;
           case "getMonth":
             if (value in result[prev[0]].childs) {
+              continue;
             } else {
               result[prev[0]].childs[value] = {
-                text: `Bulan ${value}`,
+                text: `Bulan ${value + 1}`,
                 childs: {},
                 index,
               };
@@ -407,6 +363,7 @@ export default function Reports(props) {
             break;
           case "getDate":
             if (value in result[prev[0]].childs[prev[1]].childs) {
+              continue;
             } else {
               result[prev[0]].childs[prev[1]].childs[value] = {
                 text: `Tanggal ${value}`,

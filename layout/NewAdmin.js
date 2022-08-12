@@ -21,6 +21,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import Collapse from "@mui/material/Collapse";
 import Tooltip from "@mui/material/Tooltip";
 
 import AccountCircle from "@mui/icons-material/AccountCircle";
@@ -45,6 +46,9 @@ import WorkspacesIcon from "@mui/icons-material/Workspaces";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
 
 import Footer from "@/components/Footer";
 
@@ -68,6 +72,23 @@ const drawerNavigation = [
   { text: "Members", icon: <GroupIcon />, link: "/admin/members" },
   // { text: "Sign In", icon: <LoginIcon />, link: "/admin/signin" },
   // { text: "Sign Up", icon: <AssignmentIndIcon />, link: "/admin/signup" },
+  {
+    text: "Models",
+    icon: <TableChartIcon />,
+    sub: [
+      {
+        text: "Projects",
+        icon: <GridViewRoundedIcon />,
+        link: "/admin/models/projects",
+      },
+      {
+        text: "Reports",
+        icon: <AssignmentIcon />,
+        link: "/admin/models/reports",
+      },
+    ],
+    link: "",
+  },
 ];
 const sections = {};
 const menuPrimary = [];
@@ -173,6 +194,7 @@ export default function Admin(props) {
   const [hold, set_hold] = useState(false);
   const [anchorMenu, setAnchoMenu] = useState(null);
   const [openDrawer, setDrawerOpen] = useState(true);
+  const [navToggleList, setNavToggleList] = useState([]);
   const handleDrawer = () => {
     setDrawerOpen(!openDrawer);
   };
@@ -416,30 +438,103 @@ export default function Admin(props) {
             </DrawerHeader>
             <Divider />
             <List>
-              {drawerNavigation.map(({ text, icon, link }, index) => (
-                <ListItem key={text} disablePadding>
-                  <Link style={{ all: "inherit" }} href={link}>
-                    <ListItemButton selected={link === ctx_data.active_link}>
-                      <ListItemIcon>{icon}</ListItemIcon>
-                      <ListItemText primary={text} />
-                    </ListItemButton>
-                  </Link>
-                </ListItem>
+              {drawerNavigation.map(({ text, icon, link, sub }, index) => (
+                <div key={text}>
+                  {sub ? (
+                    <>
+                      <ListItem disablePadding>
+                        {link && (
+                          <Link style={{ all: "inherit" }} href={link}>
+                            <ListItemButton
+                              selected={link === ctx_data.active_link}
+                              onClick={() => {
+                                if (navToggleList.includes(index)) {
+                                  setNavToggleList(
+                                    navToggleList.filter(
+                                      (value) => value != index
+                                    )
+                                  );
+                                } else {
+                                  setNavToggleList([...navToggleList, index]);
+                                }
+                              }}
+                            >
+                              <ListItemIcon>{icon}</ListItemIcon>
+                              <ListItemText primary={text} />
+                              {navToggleList.includes(index) ? (
+                                <ExpandLess />
+                              ) : (
+                                <ExpandMore />
+                              )}
+                            </ListItemButton>
+                          </Link>
+                        )}
+                        {!link && (
+                          <ListItemButton
+                            onClick={() => {
+                              if (navToggleList.includes(index)) {
+                                setNavToggleList(
+                                  navToggleList.filter(
+                                    (value) => value != index
+                                  )
+                                );
+                              } else {
+                                setNavToggleList([...navToggleList, index]);
+                              }
+                            }}
+                          >
+                            <ListItemIcon>{icon}</ListItemIcon>
+                            <ListItemText primary={text} />
+                            {navToggleList.includes(index) ? (
+                              <ExpandLess />
+                            ) : (
+                              <ExpandMore />
+                            )}
+                          </ListItemButton>
+                        )}
+                      </ListItem>
+                      <Collapse
+                        in={
+                          navToggleList.includes(index) ||
+                          sub.some((item) => item.link === ctx_data.active_link)
+                        }
+                        timeout="auto"
+                        unmountOnExit
+                      >
+                        <List component="div" disablePadding>
+                          {sub.map((item) => (
+                            <Link
+                              style={{ all: "inherit" }}
+                              href={item.link}
+                              key={item.text + text}
+                            >
+                              <ListItemButton
+                                selected={item.link === ctx_data.active_link}
+                                sx={{ pl: 4 }}
+                              >
+                                <ListItemIcon>{item.icon}</ListItemIcon>
+                                <ListItemText primary={item.text} />
+                              </ListItemButton>
+                            </Link>
+                          ))}
+                        </List>
+                      </Collapse>
+                    </>
+                  ) : (
+                    <ListItem disablePadding>
+                      <Link style={{ all: "inherit" }} href={link}>
+                        <ListItemButton
+                          selected={link === ctx_data.active_link}
+                        >
+                          <ListItemIcon>{icon}</ListItemIcon>
+                          <ListItemText primary={text} />
+                        </ListItemButton>
+                      </Link>
+                    </ListItem>
+                  )}
+                </div>
               ))}
             </List>
-            {/* <Divider />
-          <List>
-            {["All mail", "Trash", "Spam"].map((text, index) => (
-              <ListItem key={text} disablePadding>
-                <ListItemButton>
-                  <ListItemIcon>
-                    {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                  </ListItemIcon>
-                  <ListItemText primary={text} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List> */}
           </Drawer>
           <Section
             // @ts-ignore
