@@ -8,7 +8,7 @@ export const reportsApi = createApi({
   endpoints: (builder) => ({
     get: builder.query({
       keepUnusedDataFor: 1,
-      query: ({ data, token }) => ({
+      query: ({ token }) => ({
         url: "",
         headers: { authorization: `Bearer ${token}` },
       }),

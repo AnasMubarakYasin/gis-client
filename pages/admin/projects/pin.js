@@ -115,15 +115,13 @@ export default function Pin(props) {
       if (typeof project.coordinate == "object") {
         coord = project.coordinate;
         addr = project.address.join(", ");
-      } else if (typeof project.coordinate == "string") {
+      } else if (typeof project.coordinate == "string" && project.coordinate) {
         coord = project.coordinate.split(",").map((coord) => +coord);
         addr = project.addr;
-      }
-      if (coord && addr) {
         set_values({ coordinate: coord, address: addr });
-      }
-      if (coord && map) {
-        map.flyTo({ center: coord });
+        if (map) {
+          map.flyTo({ center: coord });
+        }
       }
     }
   }, []);

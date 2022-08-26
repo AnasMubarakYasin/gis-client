@@ -103,6 +103,11 @@ function PageSignin(props) {
   };
 
   useEffect(() => {
+    if (isLoading) {
+      setLoaderProgress((prev) => ({ ...prev, show: true, backdrop: true }));
+    }
+  }, [isLoading]);
+  useEffect(() => {
     if (isSuccess) {
       dispatch(
         login({ account: data.user, token: data.token, remember: true })

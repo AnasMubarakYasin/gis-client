@@ -49,6 +49,9 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+import SecurityIcon from "@mui/icons-material/Security";
+import HeightIcon from '@mui/icons-material/Height';
 
 import Footer from "@/components/Footer";
 
@@ -56,6 +59,7 @@ import ContextColor from "@/context/color";
 import ContextAuthenticate from "@/context/authenticate";
 import AdminContext from "@/context/admin";
 import { logout } from "@/store/user";
+import { useSignoutMutation } from "@/store/members";
 import { useForceUpdate } from "@/lib/helper-ui";
 
 const drawerWidth = 240;
@@ -70,8 +74,32 @@ const drawerNavigation = [
   // { text: "Roles", icon: <WorkspacesIcon />, link: "/admin/roles" },
   { text: "Reports", icon: <AssignmentIcon />, link: "/admin/reports" },
   { text: "Members", icon: <GroupIcon />, link: "/admin/members" },
+  { text: "Distance", icon: <HeightIcon sx={{transform: 'rotate(90deg)'}} />, link: "/admin/distance" },
   // { text: "Sign In", icon: <LoginIcon />, link: "/admin/signin" },
   // { text: "Sign Up", icon: <AssignmentIndIcon />, link: "/admin/signup" },
+  {
+    text: "Logs",
+    icon: <MonitorHeartIcon />,
+    sub: [
+      {
+        text: "Project",
+        icon: <GridViewRoundedIcon />,
+        link: '/admin/logs/projects',
+      },
+      {
+        text: "Report",
+        icon: <AssignmentIcon />,
+        link: '/admin/logs/reports',
+
+      },
+      {
+        text: "Auth",
+        icon: <SecurityIcon />,
+        link: '/admin/logs/auth',
+      },
+    ],
+    link: "",
+  },
   {
     text: "Models",
     icon: <TableChartIcon />,
@@ -191,6 +219,16 @@ export default function Admin(props) {
     }),
     []
   );
+  const [
+    signout,
+    {
+      data: signout_data,
+      error: signout_error,
+      isLoading: signout_isLoading,
+      isSuccess: signout_isSuccess,
+      isError: signout_isError,
+    },
+  ] = useSignoutMutation();
   const [hold, set_hold] = useState(false);
   const [anchorMenu, setAnchoMenu] = useState(null);
   const [openDrawer, setDrawerOpen] = useState(true);
@@ -211,7 +249,7 @@ export default function Admin(props) {
     router.push("/admin/profile");
   };
   const handleLogout = () => {
-    dispatch(logout());
+    signout({ token: user.token });
   };
   const handleRouteChangeStart = () => {
     setLoaderProgress((prev) => ({ ...prev, show: true, backdrop: true }));
@@ -239,6 +277,14 @@ export default function Admin(props) {
     //   router.events.off("routeChangeComplete", handleRouteChangeComplete);
     // };
   }, []);
+  useEffect(() => {
+    if (signout_isSuccess) {
+      dispatch(logout());
+    }
+    if (signout_isError) {
+      console.error(signout_error);
+    }
+  }, [signout_isSuccess, signout_isError]);
 
   return (
     <AdminContext.Provider value={ctx_admin}>

@@ -36,6 +36,7 @@ import ContextAuthenticate from "@/context/authenticate";
 import ContextAdmin from "@/context/admin";
 import {} from "@/store/user";
 import { useGetAllQuery, useDeleteByIdMutation } from "@/store/projects";
+import { useGlobal } from "@/lib/helper-ui";
 
 export default function Projects(props) {
   const router = useRouter();
@@ -63,6 +64,8 @@ export default function Projects(props) {
       isError: isRemovingError,
     },
   ] = useDeleteByIdMutation();
+  const [get_temp_project, set_temp_project] = useGlobal("project", () => null);
+  const [get_temp_file, set_temp_file] = useGlobal("project-file", () => null);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);

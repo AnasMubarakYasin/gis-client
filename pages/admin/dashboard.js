@@ -53,6 +53,7 @@ import BatteryUnknownIcon from "@mui/icons-material/BatteryUnknown";
 import AdminShell from "@/layout/AdminShell";
 import ContextAuthenticate from "@/context/authenticate";
 import AdminContext from "@/context/admin";
+import { useGlobal } from "@/lib/helper-ui";
 import { useStatsQuery, useSystemQuery } from "@/store/models";
 
 const stats = [];
@@ -73,14 +74,19 @@ export default function Dashboard(props) {
     isError: is_error_stat,
   } = useStatsQuery({ token: user.token });
   const {
-    data: system,
+    // data: system,
     error: error_system,
-    isLoading: is_loading_system,
+    // isLoading: is_loading_system,
     isFetching: is_fetching_system,
-    isSuccess: is_success_system,
+    // isSuccess: is_success_system,
     isError: is_error_system,
     refetch: refetch_system,
-  } = useSystemQuery({ token: user.token }, { skip: is_loading_stat });
+  } = useSystemQuery({ token: user.token }, { skip: true });
+  const [system, setSystem] = useState(null);
+  const [is_loading_system, set_is_loading_system] = useState(true);
+  const [is_success_system, set_is_success_system] = useState(false);
+
+  const [get_client_sse, set_client_sse] = useGlobal("client_sse_system");
   const [snack, setSnack] = useState({
     id: "default",
     open: false,
@@ -92,6 +98,53 @@ export default function Dashboard(props) {
     ctx_admin.set_ctx_data({
       title: "Dashboard",
       active_link: "/admin/dashboard",
+    });
+  }, []);
+  useEffect(() => {
+    let client_sse = get_client_sse();
+    if (!client_sse) {
+      client_sse = set_client_sse(
+        new EventSource(`/api/v1/models/system?authc=${user.token}`)
+      );
+    }
+    if (client_sse.readyState == EventSource.CLOSED) {
+      client_sse = set_client_sse(
+        new EventSource(`/api/v1/models/system?authc=${user.token}`)
+      );
+    }
+    client_sse.addEventListener("message", (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        setSystem(data);
+        set_is_loading_system(false);
+        set_is_success_system(true);
+      } catch (error) {
+        setSnack({
+          ...snack,
+          open: true,
+          message: (
+            <Alert elevation={6} severity="error">
+              {error.message}
+            </Alert>
+          ),
+        });
+      }
+    });
+    client_sse.addEventListener("error", (event) => {
+      console.error(event);
+      set_is_loading_system(false);
+      setSnack({
+        ...snack,
+        open: true,
+        message: (
+          <Alert elevation={6} severity="error">
+            Something Wrong
+          </Alert>
+        ),
+      });
+    });
+    router.events.on("routeChangeStart", () => {
+      client_sse.close();
     });
   }, []);
   useEffect(() => {
@@ -113,28 +166,28 @@ export default function Dashboard(props) {
       });
     }
   }, [is_success_stat, is_error_stat, is_fetching_stat]);
-  useEffect(() => {
-    if (is_success_system) {
-      const id = setTimeout(() => {
-        refetch_system();
-      }, 1500);
-      return () => {
-        clearTimeout(id);
-      };
-    }
-    if (is_error_system) {
-      const message = convertAndHandleErrorApi(error_system);
-      setSnack({
-        ...snack,
-        open: true,
-        message: (
-          <Alert elevation={6} severity="error">
-            {message}
-          </Alert>
-        ),
-      });
-    }
-  }, [is_success_system, is_error_system, is_fetching_system]);
+  // useEffect(() => {
+  //   if (is_success_system) {
+  //     const id = setTimeout(() => {
+  //       refetch_system();
+  //     }, 1500);
+  //     return () => {
+  //       clearTimeout(id);
+  //     };
+  //   }
+  //   if (is_error_system) {
+  //     const message = convertAndHandleErrorApi(error_system);
+  //     setSnack({
+  //       ...snack,
+  //       open: true,
+  //       message: (
+  //         <Alert elevation={6} severity="error">
+  //           {message}
+  //         </Alert>
+  //       ),
+  //     });
+  //   }
+  // }, [is_success_system, is_error_system, is_fetching_system]);
 
   function convertAndHandleErrorApi(error) {
     if (error.error) {

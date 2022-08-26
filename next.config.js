@@ -1,17 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  poweredByHeader: false,
   reactStrictMode: true,
   async rewrites() {
     return [
       {
         source: "/resources/:path*",
         destination: "http://localhost:5000/resources/:path*",
-        basePath: false,
       },
       {
         source: "/api/:path*",
         destination: "http://localhost:5000/api/:path*",
-        basePath: false,
+      },
+      {
+        source: "/event/:path*",
+        destination: "http://localhost:5000/event/:path*",
       },
     ];
   },

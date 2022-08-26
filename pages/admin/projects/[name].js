@@ -56,10 +56,6 @@ import {
   useCreateMutation,
   useUpdateByIdMutation,
 } from "@/store/projects";
-import {
-  useCreateMutation as useCreateMutationTasks,
-  useUpdateMutation as useUpdateMutationTasks,
-} from "@/store/reports";
 import { useGetAllQuery as useGetAllQuerySupervisors } from "@/store/supervisors";
 // import Loading from "@/layout/Loading";
 
@@ -149,7 +145,7 @@ export default function ProjectsDetail(props) {
     // refetch,
   } = useGetAllQuerySupervisors(
     { token: user.token },
-    { skip: user.account.role != "admin" }
+    { skip: user.account.role == "supervisor" }
   );
   const [
     create,

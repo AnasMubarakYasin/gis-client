@@ -58,6 +58,13 @@ export const membersApi = createApi({
         body: data,
       }),
     }),
+    signout: builder.mutation({
+      query: ({ token }) => ({
+        url: "/signout",
+        method: "GET",
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    }),
 
     auth: builder.query({
       keepUnusedDataFor: 1,
@@ -151,6 +158,7 @@ export const membersApi = createApi({
 export const {
   useCreateMutation,
   useSigninMutation,
+  useSignoutMutation,
   useUndoMutation,
   useAuthQuery,
   usePermissionMutation,
