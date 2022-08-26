@@ -93,22 +93,10 @@ export default function Reports(props) {
   const router = useRouter();
   const theme = useTheme();
   const { name, start = "", end = "" } = router.query;
-  if (!router.isReady) return <></>
-  if (!start && !end) {
-    const date = new Date();
-    router.replace({
-      pathname: "/admin/logs/[name]",
-      query: { name, start: date.getTime(), end: date.getTime() },
-    });
-    return <></>;
-  }
   const ctx_auth = useContext(ContextAuthenticate);
   const ctx_admin = useContext(AdminContext);
   // @ts-ignore
   const user = useSelector((state) => state.user);
-  const event_source = useEventSource(
-    `/event/activity/${name}?start=${start}&end=${end}&token=${user.token}`
-  );
   const [start_date, set_start_date] = useState(new Date(+start));
   const [end_date, set_end_date] = useState(new Date(+end));
   const [log_id, set_log_id] = useState(0);
@@ -133,6 +121,21 @@ export default function Reports(props) {
     });
   };
 
+  // if (!router.isReady) return <></>
+  if (!start && !end) {
+    const date = new Date();
+    router.replace({
+      pathname: "/admin/logs/[name]",
+      query: { name, start: date.getTime(), end: date.getTime() },
+    });
+    set_start_date(date);
+    set_end_date(date);
+  }
+  const event_source = useEventSource(
+    `/event/activity/${name}?start=${start}&end=${end}&token=${user.token}`,
+    !start && !end
+  );
+
   function handle_combine() {
     // router.reload();
     location.assign(location.pathname + location.search);
@@ -154,6 +157,15 @@ export default function Reports(props) {
       active_link: `/admin/logs/${name}`,
     });
   }, []);
+  // useEffect(() => {
+  //   if (!start && !end) {
+  //     const date = new Date();
+  //     router.replace({
+  //       pathname: "/admin/logs/[name]",
+  //       query: { name, start: date.getTime(), end: date.getTime() },
+  //     });
+  //   }
+  // }, []);
   useEffect(() => {
     event_source.open().then(() => {
       event_source.message((data, id) => {
