@@ -120,7 +120,6 @@ export default function Reports(props) {
       horizontal: "center",
     });
   };
-
   // if (!router.isReady) return <></>
   if (!start && !end) {
     const date = new Date();
@@ -128,8 +127,6 @@ export default function Reports(props) {
       pathname: "/admin/logs/[name]",
       query: { name, start: date.getTime(), end: date.getTime() },
     });
-    set_start_date(date);
-    set_end_date(date);
   }
   const event_source = useEventSource(
     `/event/activity/${name}?start=${start}&end=${end}&token=${user.token}`,
@@ -137,8 +134,13 @@ export default function Reports(props) {
   );
 
   function handle_combine() {
-    // router.reload();
-    location.assign(location.pathname + location.search);
+    ctx_admin.set_loader(true);
+    router.replace({
+      pathname: `/admin/logs/${name}`,
+      search: `start=${start_date.getTime()}&end=${end_date.getTime()}`,
+    }).then(() => {
+      router.reload();
+    });
   }
   function convertAndHandleErrorApi(error) {
     if (error.error) {
@@ -157,15 +159,6 @@ export default function Reports(props) {
       active_link: `/admin/logs/${name}`,
     });
   }, []);
-  // useEffect(() => {
-  //   if (!start && !end) {
-  //     const date = new Date();
-  //     router.replace({
-  //       pathname: "/admin/logs/[name]",
-  //       query: { name, start: date.getTime(), end: date.getTime() },
-  //     });
-  //   }
-  // }, []);
   useEffect(() => {
     event_source.open().then(() => {
       event_source.message((data, id) => {
@@ -176,6 +169,10 @@ export default function Reports(props) {
   useEffect(() => {
     set_logs([...logs, event_source.data()]);
   }, [log_id]);
+  useEffect(() => {
+    set_start_date(new Date(+start));
+    set_end_date(new Date(+end));
+  }, [start, end]);
   useEffect(() => {
     router.replace({
       pathname: "/admin/logs/[name]",
@@ -241,7 +238,7 @@ export default function Reports(props) {
               />
             </LocalizationProvider>
             <Button variant="contained" onClick={handle_combine}>
-              Combine
+              Fetch
             </Button>
           </Box>
         </Paper>
@@ -281,7 +278,7 @@ export default function Reports(props) {
         fullWidth
         maxWidth="sm"
         open={false}
-        // onClose={handleCloseDialogAdd}
+      // onClose={handleCloseDialogAdd}
       >
         <DialogTitle display="flex" alignItems="center">
           <Typography component="div" variant="h6" sx={{ flexGrow: 1 }}>
@@ -289,7 +286,7 @@ export default function Reports(props) {
           </Typography>
           <IconButton
             aria-label="close"
-            // onClick={handleCloseDialogAdd}
+          // onClick={handleCloseDialogAdd}
           >
             <CloseIcon />
           </IconButton>
