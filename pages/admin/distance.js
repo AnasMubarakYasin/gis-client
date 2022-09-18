@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { styled, useTheme, useMediaQuery } from "@mui/material";
 
 import "mapbox-gl/dist/mapbox-gl.css";
+import mapboxgl from "mapbox-gl";
 import {
   Map,
   useMap,
@@ -42,6 +43,7 @@ import OpenWithIcon from "@mui/icons-material/OpenWith";
 import PanToolIcon from "@mui/icons-material/PanTool";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CircleIcon from "@mui/icons-material/Circle";
 
 import AdminShell from "@/layout/AdminShell";
 import ContextAuthenticate from "@/context/authenticate";
@@ -49,12 +51,18 @@ import ContextAdmin from "@/context/admin";
 import { useGlobal } from "@/lib/helper-ui";
 import { MAP } from "@/lib/const";
 
+import { useGetAllPublicQuery } from "@/store/projects";
+
 /**
  *
  * @param {[[number,number],[number,number]]} coordinates
  */
 function eucledian([[lon1, lat1], [lon2, lat2]]) {
-  return 0;
+  console.log([
+    [lon1, lat1],
+    [lon2, lat2],
+  ]);
+  return Math.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2);
 }
 /**
  *
@@ -88,28 +96,6 @@ function CustomControl(props) {
   }, []);
   return <></>;
 }
-// function CenterPin(props) {
-//   const { current: map } = useMap();
-
-//   useEffect(() => {
-//     const div = document.createElement("div");
-//     div.style.display = "grid";
-//     div.style.position = "absolute";
-//     div.style.top = "-12px";
-//     div.style.width = "100%";
-//     div.style.height = "100%";
-//     const root = createRoot(div);
-//     root.render(props.children);
-//     map.getCanvasContainer().append(div);
-//   }, []);
-
-//   return <></>;
-// }
-// function geocoding_reverse({ ept = "mapbox.places", lng, lat, token, signal }) {
-//   return fetch(
-//     `https://api.mapbox.com/geocoding/v5/${ept}/${lng},${lat}.json?access_token=${token}`
-//   ).then((res) => res.json());
-// }
 const ctrl = {
   btn: "move",
 };
@@ -124,6 +110,16 @@ export default function Distance(props) {
   const ctx_admin = useContext(ContextAdmin);
   // @ts-ignore
   // const user = useSelector((state) => state.user);
+  const {
+    data: projects = [],
+    error: projects_error,
+    isLoading: project_loading,
+    isFetching: project_fetching,
+    isSuccess: project_success,
+    isError: project_error,
+    refetch,
+  } = useGetAllPublicQuery();
+
   const [btn_ctrl, set_btn_ctrl] = useState("move");
   const [have_map, set_have_map] = useState(false);
   const [coordinates, set_coordinates] = useState([
@@ -155,23 +151,165 @@ export default function Distance(props) {
 
   function handle_select() {
     // @ts-ignore
-    set_distance(spherical(coordinates) + " km");
+    // set_distance(spherical(coordinates) + " km");
+    set_distance(eucledian(coordinates) + " km");
   }
   function handle_load(event) {
     set_have_map(true);
-    set_source(event.target);
+    set_style(event.target);
+    // set_source(event.target);
   }
-  // function set_style() {
-  //   if (theme.palette.mode == "dark") {
-  //     map.setStyle("mapbox://styles/mapbox/dark-v10");
-  //   } else {
-  //     map.setStyle(MAP.STYLE);
-  //   }
-  // }
+  /**
+   * @param {import('mapbox-gl').Map} map
+   */
+  function set_style(map) {
+    map.once("styledata", () => {
+      set_source(map);
+      // set_select_disabled(false);
+    });
+    if (theme.palette.mode == "dark") {
+      map.setStyle("mapbox://styles/mapbox/dark-v10");
+    } else {
+      map.setStyle(MAP.STYLE);
+    }
+  }
   /**
    * @param {import('mapbox-gl').Map} map
    */
   function set_source(map) {
+    let project_clicked = [0, 0];
+    // SECTION wajo
+    const fill =
+      theme.palette.mode == "dark" ? "rgba(200, 100, 240, 1)" : "#627BC1";
+    const line_fill =
+      theme.palette.mode == "dark" ? "rgba(200, 100, 240, 1)" : "#627BC1";
+    const color = theme.palette.mode == "dark" ? "white" : "black";
+    if (map.getSource("wajo")) {
+      return;
+    }
+    map.addSource("wajo", {
+      type: "geojson",
+      data: "/data/wajo.json",
+    });
+    map.addLayer({
+      id: "wajo-fills",
+      type: "fill",
+      source: "wajo",
+      layout: {},
+      paint: {
+        "fill-color": fill,
+        "fill-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false],
+          1,
+          0.1,
+        ],
+      },
+    });
+    map.addLayer({
+      id: "wajo-borders",
+      type: "line",
+      source: "wajo",
+      layout: {},
+      paint: {
+        "line-color": line_fill,
+        "line-width": 2,
+      },
+    });
+    map.addLayer({
+      id: "wajo-labels",
+      type: "symbol",
+      source: "wajo",
+      layout: {
+        "text-field": [
+          "format",
+          ["upcase", ["get", "Name"]],
+          { "font-scale": 0.7 },
+          "\n",
+          {},
+        ],
+        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+      },
+      paint: { "text-color": color },
+    });
+    // SECTION projects
+    map.addSource("projects", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: projects.map((project, index) => {
+          return {
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: project.coordinate,
+            },
+            properties: {
+              id: String(Date.now()),
+              index,
+              name: project.name,
+              address: project.address.join(", "),
+            },
+          };
+        }),
+      },
+    });
+    map.addLayer({
+      id: "project-point",
+      source: "projects",
+      type: "circle",
+      paint: {
+        "circle-radius": 10,
+        "circle-color": "#007cbf",
+      },
+    });
+    map.on("click", "project-point", (e) => {
+      project_clicked = projects[e.features.at(0).properties.index].coordinate;
+      if (ctrl.btn == "move") {
+        new mapboxgl.Popup()
+          // @ts-ignore
+          .setLngLat(project_clicked)
+          .setHTML(
+            `<div style="color: #111;">${
+              e.features.at(0).properties.name
+            }</div>`
+          )
+          .addTo(map);
+      } else if (ctrl.btn == "line") {
+        e.preventDefault();
+        if (point_count == 0) {
+          set_address_list([e.features.at(0).properties.address, ""]);
+        } else if (point_count == 1) {
+          set_address_list([
+            address_list.at(0),
+            e.features.at(0).properties.address,
+          ]);
+        }
+      }
+    });
+    map.on("mouseenter", "project-point", (e) => {
+      if (ctrl.btn == "move") {
+        map.getCanvas().style.cursor = "pointer";
+      } else if (ctrl.btn == "line") {
+        e.originalEvent.stopPropagation();
+        map.getCanvas().style.cursor = "pointer";
+      }
+    });
+    map.on("mousemove", "project-point", (e) => {
+      if (ctrl.btn == "line") {
+        e.preventDefault();
+        // e.originalEvent.preventDefault();
+        // e.originalEvent.stopPropagation();
+        // e.originalEvent.stopImmediatePropagation();
+        map.getCanvas().style.cursor = "pointer";
+      }
+    });
+    map.on("mouseleave", "project-point", () => {
+      if (ctrl.btn == "move") {
+        map.getCanvas().style.cursor = "";
+      }
+    });
+    // SECTION distance
     const geojson = { features: [], type: "FeatureCollection" };
     const linestring = {
       type: "Feature",
@@ -220,6 +358,7 @@ export default function Distance(props) {
           [0, 0],
           [0, 0],
         ]);
+        set_address_list(["", ""]);
         set_select_disabled(true);
         geojson.features.splice(0);
         const source = map.getSource("geojson");
@@ -229,7 +368,7 @@ export default function Distance(props) {
         }
       }
     });
-    map.on("click", (e) => {
+    map.on("click", "wajo-fills", (e) => {
       if (ctrl.btn == "line") {
         const features = map.queryRenderedFeatures(e.point, {
           layers: ["measure-points"],
@@ -244,6 +383,7 @@ export default function Distance(props) {
           geojson.features = geojson.features.filter(
             (point) => point.properties.id !== id
           );
+          point_count--;
         } else {
           if (point_count >= 2) {
             return;
@@ -255,12 +395,15 @@ export default function Distance(props) {
             type: "Feature",
             geometry: {
               type: "Point",
-              coordinates: [e.lngLat.lng, e.lngLat.lat],
+              coordinates: e.lngLat.toArray(),
             },
             properties: {
               id: String(Date.now()),
             },
           };
+          if (e.defaultPrevented) {
+            point.geometry.coordinates = project_clicked;
+          }
 
           point_count++;
           geojson.features.push(point);
@@ -286,12 +429,13 @@ export default function Distance(props) {
       } else if (ctrl.btn == "delete") {
       }
     });
-    map.on("mousemove", (e) => {
+    map.on("mousemove", "wajo-fills", (e) => {
       if (ctrl.btn == "move") {
-        map.getCanvas().style.cursor = "grab";
+        // map.getCanvas().style.cursor = "grab";
       } else if (ctrl.btn == "delete") {
         map.getCanvas().style.cursor = "default";
       } else if (ctrl.btn == "line") {
+        if (e.defaultPrevented) return;
         const features = map.queryRenderedFeatures(e.point, {
           layers: ["measure-points"],
         });
@@ -345,25 +489,7 @@ export default function Distance(props) {
                 >
                   <CustomControl position="top-right">
                     <Box ref={container}></Box>
-                    {/* <FormControl variant="outlined" size="small">
-                      <OutlinedInput
-                        sx={{ bgcolor: "white" }}
-                        size="small"
-                        id="input-search"
-                        placeholder="Search..."
-                        startAdornment={
-                          <InputAdornment position="start">
-                            <SearchIcon />
-                          </InputAdornment>
-                        }
-                        aria-describedby="outlined-weight-helper-text"
-                        inputProps={{
-                          "aria-label": "search",
-                        }}
-                      />
-                    </FormControl> */}
                   </CustomControl>
-                  {/* <GeolocateControl /> */}
                   <NavigationControl position="bottom-right" />
                   <ScaleControl />
                 </Map>
@@ -406,14 +532,14 @@ export default function Distance(props) {
                     id="from"
                     label="Dari"
                     variant="outlined"
-                    value={coordinates.at(0)?.join(", ") ?? "0, 0"}
+                    value={coordinates.at(0)?.join(", ") ?? ""}
                   />
                   <TextField
                     fullWidth
                     id="to"
                     label="Ke"
                     variant="outlined"
-                    value={coordinates.at(1)?.join(", ") ?? "0, 0"}
+                    value={coordinates.at(1)?.join(", ") ?? ""}
                   />
                 </Box>
                 <Box display="flex" gap={theme.spacing(2)}>
@@ -422,14 +548,14 @@ export default function Distance(props) {
                     id="from-address"
                     label="Alamat Dari"
                     variant="outlined"
-                    value={""}
+                    value={address_list.at(0) ?? ""}
                   />
                   <TextField
                     fullWidth
                     id="to-address"
                     label="Alamat Ke"
                     variant="outlined"
-                    value={""}
+                    value={address_list.at(1) ?? ""}
                   />
                 </Box>
                 <TextField

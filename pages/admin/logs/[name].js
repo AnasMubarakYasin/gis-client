@@ -175,9 +175,13 @@ export default function Reports(props) {
   }, [start, end]);
   useEffect(() => {
     router.replace({
-      pathname: "/admin/logs/[name]",
-      query: { name, start: start_date.getTime(), end: end_date.getTime() },
-    });
+      pathname: `/admin/logs/${name}`,
+      search: `start=${start_date.getTime()}&end=${end_date.getTime()}`,
+    })
+    // router.replace({
+    //   pathname: "/admin/logs/[name]",
+    //   query: { name, start: start_date.getTime(), end: end_date.getTime() },
+    // });
   }, [start_date.toLocaleDateString(), end_date.toLocaleDateString()]);
 
   return (
