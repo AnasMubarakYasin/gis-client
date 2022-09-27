@@ -120,8 +120,7 @@ export default function Reports(props) {
       horizontal: "center",
     });
   };
-  // if (!router.isReady) return <></>
-  if (!start && !end) {
+  if (!!name && !start && !end) {
     const date = new Date();
     router.replace({
       pathname: "/admin/logs/[name]",
@@ -135,37 +134,25 @@ export default function Reports(props) {
 
   function handle_combine() {
     ctx_admin.set_loader(true);
-    router.replace({
-      pathname: `/admin/logs/${name}`,
-      search: `start=${start_date.getTime()}&end=${end_date.getTime()}`,
-    }).then(() => {
-      router.reload();
-    });
-  }
-  function convertAndHandleErrorApi(error) {
-    if (error.error) {
-      return error.error;
-    } else {
-      if (error.status == 401) {
-        ctx_auth.open_signin(true);
-      }
-      return error.data.message;
-    }
+    router.reload();
   }
 
   useEffect(() => {
+    if (!name) {
+      return;
+    }
     ctx_admin.set_ctx_data({
       title: `${name} log`,
       active_link: `/admin/logs/${name}`,
     });
-  }, []);
+  }, [name]);
   useEffect(() => {
     event_source.open().then(() => {
       event_source.message((data, id) => {
         set_log_id(id);
       });
     });
-  }, []);
+  });
   useEffect(() => {
     set_logs([...logs, event_source.data()]);
   }, [log_id]);
@@ -174,14 +161,13 @@ export default function Reports(props) {
     set_end_date(new Date(+end));
   }, [start, end]);
   useEffect(() => {
+    if (!name) {
+      return;
+    }
     router.replace({
       pathname: `/admin/logs/${name}`,
       search: `start=${start_date.getTime()}&end=${end_date.getTime()}`,
-    })
-    // router.replace({
-    //   pathname: "/admin/logs/[name]",
-    //   query: { name, start: start_date.getTime(), end: end_date.getTime() },
-    // });
+    });
   }, [start_date.toLocaleDateString(), end_date.toLocaleDateString()]);
 
   return (
@@ -282,7 +268,7 @@ export default function Reports(props) {
         fullWidth
         maxWidth="sm"
         open={false}
-      // onClose={handleCloseDialogAdd}
+        // onClose={handleCloseDialogAdd}
       >
         <DialogTitle display="flex" alignItems="center">
           <Typography component="div" variant="h6" sx={{ flexGrow: 1 }}>
@@ -290,7 +276,7 @@ export default function Reports(props) {
           </Typography>
           <IconButton
             aria-label="close"
-          // onClick={handleCloseDialogAdd}
+            // onClick={handleCloseDialogAdd}
           >
             <CloseIcon />
           </IconButton>
