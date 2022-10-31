@@ -1001,6 +1001,7 @@ export default function ProjectsDetail(props) {
                       }}
                     >
                       {(is_root ||
+                        (is_admin && !created) ||
                         (is_admin && is_maintenance) ||
                         (is_supervisor && is_development)) && (
                         <Button
