@@ -165,28 +165,6 @@ export default function ProjectsDetail(props) {
       error: errorUpdate,
     },
   ] = useUpdateByIdMutation();
-  // const [
-  //   update_tasks,
-  //   {
-  //     isLoading: is_loading_update_tasks,
-  //     isSuccess: is_success_update_tasks,
-  //     isError: is_error_update_tasks,
-  //     error: error_tasks,
-  //   },
-  // ] = useUpdateMutationTasks();
-  // const [
-  //   create_tasks,
-  //   {
-  //     data: data_create_tasks,
-  //     error: error_create_tasks,
-  //     isLoading: is_loading_create_tasks,
-  //     isSuccess: is_success_create_tasks,
-  //     isError: is_error_create_tasks,
-  //   },
-  // ] = useCreateMutationTasks();
-  // const { values = {} } = useFormikContext();
-  // const [tasks, setTasks] = useState([]);
-  // const [supervisors, set_supervisors] = useState([]);
   const [created, setCreated] = useState(false);
   const [fileImage, setFileImage] = useState(null);
   const [fileProposal, setFileProposal] = useState(null);
@@ -200,17 +178,14 @@ export default function ProjectsDetail(props) {
     open: false,
     message: <div></div>,
   });
-  // const calculateProgress = () => {
-  //   let done = 0;
-  //   for (const task of tasks) {
-  //     task.done && (done += 1);
-  //   }
-  //   setProgress({
-  //     done,
-  //     of: tasks.length,
-  //     percent: (done / tasks.length) * 100,
-  //   });
-  // };
+  const is_root = user.account.role == "root";
+  const is_admin = user.account.role == "admin";
+  const is_supervisor = user.account.role == "supervisor";
+  // @ts-ignore
+  const is_development = project?.status == "Pembangunan";
+  // @ts-ignore
+  const is_maintenance = project?.status == "Perawatan";
+  // console.log((is_admin && is_maintenance) || is_root || (is_supervisor && is_development));
   const handleValidate = (values) => {
     const errors = {};
     if (!values.image) {
@@ -221,43 +196,57 @@ export default function ProjectsDetail(props) {
   const handleSubmit = async (values, { setSubmitting }) => {
     let message;
     try {
-      const data = Object.assign({}, values, {
-        name: values.name.trim(),
-        image,
-        proposal,
-        fiscal_year: values.fiscal_year + "",
-        id_supervisors: values.id_supervisors
-          ? values.id_supervisors
-          : undefined,
-        contract_date: format(new Date(values.contract_date), "yyyy-MM-dd"),
-        coordinate:
-          typeof values.coordinate == "string"
-            ? values.coordinate.split(",").map((coord) => +coord)
-            : values.coordinate,
-        address:
-          typeof values.address == "string"
-            ? values.address.split(",").map((addr) => addr)
-            : values.address,
-      });
-      if (created) {
-        delete data.tasks;
+      if (values.type == "submit") {
+        const data = Object.assign({}, values, {
+          name: values.name.trim(),
+          image,
+          proposal,
+          fiscal_year: values.fiscal_year + "",
+          id_supervisors: values.id_supervisors
+            ? values.id_supervisors
+            : undefined,
+          contract_date: format(new Date(values.contract_date), "yyyy-MM-dd"),
+          coordinate:
+            typeof values.coordinate == "string"
+              ? values.coordinate.split(",").map((coord) => +coord)
+              : values.coordinate,
+          address:
+            typeof values.address == "string"
+              ? values.address.split(",").map((addr) => addr)
+              : values.address,
+        });
+        if (created) {
+          delete data.tasks;
+          await update({
+            // @ts-ignore
+            id: project.id,
+            data,
+            image: fileImage,
+            proposal: fileProposal,
+            token: user.token,
+          });
+        } else {
+          delete data.tasks;
+          data.id_admins = user.account.id;
+          await create({
+            data,
+            image: fileImage,
+            proposal: fileProposal,
+            token: user.token,
+          });
+        }
+      } else if (values.type == "done") {
         await update({
           // @ts-ignore
           id: project.id,
-          data,
+          data: { status: "Perawatan" },
           image: fileImage,
           proposal: fileProposal,
           token: user.token,
         });
-      } else {
-        delete data.tasks;
-        data.id_admins = user.account.id;
-        await create({
-          data,
-          image: fileImage,
-          proposal: fileProposal,
-          token: user.token,
-        });
+        setTimeout(() => {
+          router.replace("/admin/projects");
+        }, 1000);
       }
     } catch (error) {
       message = (
@@ -274,78 +263,6 @@ export default function ProjectsDetail(props) {
       setSubmitting(false);
     }
   };
-  // const handleTasksUpdate = async () => {
-  //   let message;
-  //   try {
-  //     // @ts-ignore
-  //     if (!project.id) {
-  //       throw new Error("Create Project First");
-  //     }
-  //     const data = [];
-  //     let count = 1;
-  //     for (const task of tasks) {
-  //       const copy = Object.assign({}, task);
-  //       copy.order = count++;
-  //       data.push(copy);
-  //     }
-  //     await update_tasks({ data, token: user.token });
-  //   } catch (error) {
-  //     message = (
-  //       <Alert elevation={6} severity="error">
-  //         {error.message}
-  //       </Alert>
-  //     );
-  //     setSnack((prev) => ({
-  //       ...prev,
-  //       open: true,
-  //       message,
-  //     }));
-  //   }
-  // };
-  // const handleIsAddTask = (event) => {
-  //   setIsAddTask(!isAddTask);
-  // };
-  // const handleCloseAddTask = (values) => {};
-  // const handleAddTask = async (values, { setSubmitting }) => {
-  //   const data = Object.assign(
-  //     // @ts-ignore
-  //     { id_projects: project.id, order: 1, done: false },
-  //     values
-  //   );
-  //   await create_tasks({ data, token: user.token });
-  // };
-  // const handleTaskEdit = (index) => (event) => {
-  //   const copy = Array.of(...tasks);
-  //   const task = copy[index];
-  //   if (task) {
-  //     copy.splice(
-  //       index,
-  //       1,
-  //       Object.assign({}, task, { note: event.target.value })
-  //     );
-  //     // copy.done = !task.done;
-  //     setTasks(copy);
-  //   }
-  // };
-  // const handleTaskDone = (index) => (event) => {
-  //   const copy = Array.of(...tasks);
-  //   const task = copy[index];
-  //   if (task) {
-  //     copy.splice(index, 1, Object.assign({}, task, { done: !task.done }));
-  //     setTasks(copy);
-  //   }
-  // };
-  // const handleTaskSwitch = ({ drag, drop }) => {
-  //   const currTask = tasks.findIndex((task) => task.id == drag.id);
-  //   const nextTask = tasks.findIndex((task) => task.id == drop.id);
-  //   const prevTask = Object.assign({}, tasks[nextTask]);
-  //   const nextOrder = tasks[nextTask].order;
-  //   tasks[nextTask] = Object.assign({}, tasks[currTask]);
-  //   tasks[currTask] = prevTask;
-  //   tasks[nextTask].order = prevTask.order;
-  //   prevTask.order = nextOrder;
-  //   setTasks(Array.of(...tasks));
-  // };
   const handleSnackClose = (event, reason) => {
     setSnack((prev) => ({ ...prev, open: false }));
   };
@@ -700,6 +617,7 @@ export default function ProjectsDetail(props) {
                   address: "",
                   id_supervisors: "",
                   proposal: "",
+                  type: "submit",
                 },
                 project,
                 get_temp_project()
@@ -737,6 +655,10 @@ export default function ProjectsDetail(props) {
                             xl: "500px",
                           },
                         }}
+                        disabled={
+                          (is_admin && created && is_development) ||
+                          isSubmitting
+                        }
                       >
                         <input
                           hidden
@@ -748,7 +670,10 @@ export default function ProjectsDetail(props) {
                             handleImage(e);
                             setFieldValue("image", e.target.value);
                           }}
-                          disabled={isSubmitting}
+                          disabled={
+                            (is_admin && created && is_development) ||
+                            isSubmitting
+                          }
                         />
                         {/* <Button
                           color="primary"
@@ -769,7 +694,11 @@ export default function ProjectsDetail(props) {
                             aspectRatio: "4 / 3",
                             objectFit: "contain",
                             objectPosition: "center",
-                            opacity: isSubmitting ? ".7" : "1",
+                            opacity:
+                              (is_admin && created && is_development) ||
+                              isSubmitting
+                                ? ".7"
+                                : "1",
                           }}
                         >
                           <PhotoCameraIcon
@@ -801,6 +730,7 @@ export default function ProjectsDetail(props) {
                         type="text"
                         label="Nama Proyek"
                         required
+                        disabled={is_admin && created && is_development}
                       />
                       <Field
                         component={FormikTextField}
@@ -809,6 +739,7 @@ export default function ProjectsDetail(props) {
                         type="text"
                         label="Nama Perusahaan"
                         required
+                        disabled={is_admin && created && is_development}
                       />
                       <Field
                         component={FormikTextField}
@@ -817,11 +748,16 @@ export default function ProjectsDetail(props) {
                         type="number"
                         label="Nomor Kontrak"
                         required
+                        disabled={is_admin && created && is_development}
                       />
                       <LocalizationProvider dateAdapter={AdapterDateFns}>
                         <DatePicker
                           label="Tanggal Kontrak"
                           value={values.contract_date}
+                          disabled={
+                            (is_admin && created && is_development) ||
+                            isSubmitting
+                          }
                           onChange={(newValue) =>
                             setFieldValue("contract_date", newValue)
                           }
@@ -830,7 +766,10 @@ export default function ProjectsDetail(props) {
                               {...params}
                               name="contract_date"
                               required
-                              disabled={isSubmitting}
+                              disabled={
+                                (is_admin && created && is_development) ||
+                                isSubmitting
+                              }
                             />
                           )}
                         />
@@ -844,6 +783,10 @@ export default function ProjectsDetail(props) {
                         multiline
                         minRows={3}
                         required
+                        disabled={
+                          (is_admin && created && is_development) ||
+                          isSubmitting
+                        }
                       />
                       {/* <Field
                         component={FormikTextField}
@@ -855,7 +798,7 @@ export default function ProjectsDetail(props) {
                         minRows={3}
                         required
                       /> */}
-                      <FormControl fullWidth>
+                      {/* <FormControl fullWidth>
                         <InputLabel id="status" required>
                           Status
                         </InputLabel>
@@ -878,8 +821,8 @@ export default function ProjectsDetail(props) {
                             Perawatan
                           </MenuItem>
                         </Select>
-                      </FormControl>
-                      <Field
+                      </FormControl> */}
+                      {/* <Field
                         component={FormikTextField}
                         variant="outlined"
                         name="progress"
@@ -887,7 +830,7 @@ export default function ProjectsDetail(props) {
                         label="Progress"
                         required
                         readOnly
-                      />
+                      /> */}
                       <Field
                         component={FormikTextField}
                         variant="outlined"
@@ -895,6 +838,10 @@ export default function ProjectsDetail(props) {
                         type="text"
                         label="Sumber Dana"
                         required
+                        disabled={
+                          (is_admin && created && is_development) ||
+                          isSubmitting
+                        }
                       />
                       <FormControl fullWidth>
                         <InputLabel id="fiscal_year" required>
@@ -908,7 +855,10 @@ export default function ProjectsDetail(props) {
                           onChange={(event) =>
                             setFieldValue("fiscal_year", event.target.value)
                           }
-                          disabled={isSubmitting}
+                          disabled={
+                            (is_admin && created && is_development) ||
+                            isSubmitting
+                          }
                           required
                         >
                           {years.map((value) => (
@@ -929,7 +879,10 @@ export default function ProjectsDetail(props) {
                           type="text"
                           value={values.coordinate}
                           error={!!errors.coordinate}
-                          disabled={isSubmitting}
+                          disabled={
+                            (is_admin && created && is_development) ||
+                            isSubmitting
+                          }
                           // onChange={(evt) =>
                           //   setFieldValue("coordinate", evt.target.value)
                           // }
@@ -938,7 +891,10 @@ export default function ProjectsDetail(props) {
                               <IconButton
                                 aria-label="pin coordinate"
                                 onClick={handleSelectMap(values)}
-                                disabled={isSubmitting}
+                                disabled={
+                                  (is_admin && created && is_development) ||
+                                  isSubmitting
+                                }
                                 edge="end"
                               >
                                 <RoomIcon />
@@ -957,6 +913,10 @@ export default function ProjectsDetail(props) {
                         type="address"
                         label="Alamat"
                         required
+                        disabled={
+                          (is_admin && created && is_development) ||
+                          isSubmitting
+                        }
                       />
                       <FormControl variant="outlined">
                         <InputLabel htmlFor="proposal" required>
@@ -969,7 +929,10 @@ export default function ProjectsDetail(props) {
                           type="text"
                           value={proposal}
                           error={!!errors.proposal}
-                          disabled={isSubmitting}
+                          disabled={
+                            (is_admin && created && is_development) ||
+                            isSubmitting
+                          }
                           // onChange={(evt) =>
                           //   setFieldValue("proposal", evt.target.value)
                           // }
@@ -978,7 +941,10 @@ export default function ProjectsDetail(props) {
                               <IconButton
                                 component="label"
                                 aria-label="upload proposal"
-                                disabled={isSubmitting}
+                                disabled={
+                                  (is_admin && created && is_development) ||
+                                  isSubmitting
+                                }
                                 edge="end"
                               >
                                 <input
@@ -996,47 +962,77 @@ export default function ProjectsDetail(props) {
                           {errors.proposal ? errors.proposal + "" : ""}
                         </FormHelperText>
                       </FormControl>
-                      <FormControl fullWidth>
-                        <InputLabel id="id_supervisors">Pengawas</InputLabel>
-                        <Select
-                          labelId="id_supervisors"
-                          id="id_supervisors"
-                          name="id_supervisors"
-                          label="Pengawas"
-                          value={values.id_supervisors ?? ""}
-                          onChange={(event) =>
-                            setFieldValue("id_supervisors", event.target.value)
-                          }
-                          disabled={isSubmitting}
-                        >
-                          {supervisors.map((item) => (
-                            <MenuItem key={item.username} value={item.id}>
-                              {item.username}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      {/* {user.account.role == "admin" && (
-                        
-                      )} */}
+                      {(is_root || is_admin) && (
+                        <FormControl fullWidth>
+                          <InputLabel id="id_supervisors">Pengawas</InputLabel>
+                          <Select
+                            labelId="id_supervisors"
+                            id="id_supervisors"
+                            name="id_supervisors"
+                            label="Pengawas"
+                            value={values.id_supervisors ?? ""}
+                            disabled={
+                              (is_admin && created && is_development) ||
+                              isSubmitting
+                            }
+                            onChange={(event) =>
+                              setFieldValue(
+                                "id_supervisors",
+                                event.target.value
+                              )
+                            }
+                          >
+                            {supervisors.map((item) => (
+                              <MenuItem key={item.username} value={item.id}>
+                                {item.username}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )}
                     </Box>
                     <Box
                       display="grid"
+                      gridAutoFlow="column"
+                      gap={2}
                       paddingX={{
                         sm: "10%",
                         md: "30%",
                       }}
                     >
-                      <Button
-                        id="submit-btn"
-                        variant="contained"
-                        size="large"
-                        disableElevation
-                        disabled={isSubmitting}
-                        type="submit"
-                      >
-                        {created ? "Perbarui" : "Buat"}
-                      </Button>
+                      {(is_root ||
+                        (is_admin && is_maintenance) ||
+                        (is_supervisor && is_development)) && (
+                        <Button
+                          id="submit-btn"
+                          variant="contained"
+                          size="large"
+                          disableElevation
+                          disabled={isSubmitting}
+                          type="submit"
+                          onClick={() => {
+                            setFieldValue("type", "submit");
+                          }}
+                        >
+                          {created ? "Perbarui" : "Buat"}
+                        </Button>
+                      )}
+                      {(is_root || is_supervisor) && is_development && (
+                        <Button
+                          id="submit-btn"
+                          variant="outlined"
+                          size="large"
+                          color="success"
+                          disableElevation
+                          disabled={isSubmitting}
+                          type="submit"
+                          onClick={() => {
+                            setFieldValue("type", "done");
+                          }}
+                        >
+                          Selesai
+                        </Button>
+                      )}
                     </Box>
                   </Box>
                 </Form>

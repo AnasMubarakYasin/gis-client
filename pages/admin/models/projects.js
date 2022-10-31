@@ -297,7 +297,7 @@ export default function Reports(props) {
     return (
       <GridToolbarContainer sx={{ gap: 1 }}>
         {/* <GridToolbarDensitySelector color="inherit" size="medium" /> */}
-        <GridToolbarColumnsButton color="inherit" size="medium" />
+        <GridToolbarColumnsButton  color="inherit" size="medium" />
         <GridToolbarFilterButton color="inherit" sx={{ fontSize: "14px" }} />
         {/* <Button
           size="medium"

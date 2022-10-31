@@ -68,6 +68,7 @@ import {
 
 import Page from "@/layout/Page";
 import { useGetAllPublicQuery } from "@/store/projects";
+import { capitalize_each_word } from "@/lib/helper-ui";
 import { MAP } from "@/lib/const";
 
 const nav_links = [
@@ -106,17 +107,6 @@ const layerStyle = {
     "circle-color": "#007cbf",
   },
 };
-
-function capitalize_each_word(str) {
-  const result = [];
-  for (const word of str.split(" ")) {
-    if (!word.length) continue;
-    let str = word[0].toUpperCase();
-    str += word.slice(1).toLowerCase();
-    result.push(str);
-  }
-  return result.join(" ");
-}
 
 export default function Home(props) {
   const theme = useTheme();

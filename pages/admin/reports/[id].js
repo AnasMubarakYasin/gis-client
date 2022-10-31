@@ -151,6 +151,8 @@ export default function Reports(props) {
     base_building: "",
     structure: "",
     supervisor_instruction: "",
+    worthiness: "",
+    condition: "",
     project_copy: project,
   });
   const [snack, setSnack] = useState({
@@ -161,6 +163,13 @@ export default function Reports(props) {
     vertical: "bottom",
     horizontal: "center",
   });
+  const is_root = user.account.role == "root";
+  const is_admin = user.account.role == "admin";
+  const is_supervisor = user.account.role == "supervisor";
+  // @ts-ignore
+  const is_development = project?.status == "Pembangunan";
+  // @ts-ignore
+  const is_maintenance = project?.status == "Perawatan";
   const handleToggle = (event, nodeIds) => {
     setExpanded(nodeIds);
   };
@@ -178,6 +187,7 @@ export default function Reports(props) {
     if (dialogValue.id) {
       delete data.project_copy;
       delete data.reported_at;
+      console.log(data);
       update({ id: dialogValue.id, data, token });
     } else {
       create({ data, token });
@@ -260,6 +270,8 @@ export default function Reports(props) {
       base_building: "",
       structure: "",
       supervisor_instruction: "",
+      worthiness: "",
+      condition: "",
       project_copy: {},
     });
     setOpenDialogAdd(false);
@@ -723,63 +735,98 @@ export default function Reports(props) {
                     value={values.reported_at}
                     disabled={isSubmitting}
                   ></TextField>
-                  <TextField
-                    required
-                    label="Pekerjaan Persiapan"
-                    name="preparation"
-                    value={values.preparation}
-                    disabled={isSubmitting}
-                    multiline
-                    minRows={2}
-                    onChange={(evt) =>
-                      setFieldValue("preparation", evt.target.value)
-                    }
-                  ></TextField>
-                  <TextField
-                    required
-                    label="Pekerjaan Bangunan Dasar"
-                    name="structure"
-                    value={values.structure}
-                    disabled={isSubmitting}
-                    multiline
-                    minRows={2}
-                    onChange={(evt) =>
-                      setFieldValue("structure", evt.target.value)
-                    }
-                  ></TextField>
-                  <TextField
-                    required
-                    label="Pekerjaan Struktur"
-                    name="base_building"
-                    value={values.base_building}
-                    disabled={isSubmitting}
-                    multiline
-                    minRows={2}
-                    onChange={(evt) =>
-                      setFieldValue("base_building", evt.target.value)
-                    }
-                  ></TextField>
-                  <TextField
-                    required
-                    label="Instruksi Dari Pengawasan Dinas"
-                    name="supervisor_instruction"
-                    value={values.supervisor_instruction}
-                    disabled={isSubmitting}
-                    multiline
-                    minRows={2}
-                    onChange={(evt) =>
-                      setFieldValue("supervisor_instruction", evt.target.value)
-                    }
-                  ></TextField>
-                  <Button
-                    disableElevation
-                    type="submit"
-                    size="large"
-                    disabled={isSubmitting}
-                    variant="contained"
-                  >
-                    {dialogValue.id ? "Update" : "Create"}
-                  </Button>
+                  {is_development ? (
+                    <>
+                      <TextField
+                        required
+                        label="Pekerjaan Persiapan"
+                        name="preparation"
+                        value={values.preparation}
+                        disabled={isSubmitting}
+                        multiline
+                        minRows={2}
+                        onChange={(evt) =>
+                          setFieldValue("preparation", evt.target.value)
+                        }
+                      ></TextField>
+                      <TextField
+                        required
+                        label="Pekerjaan Bangunan Dasar"
+                        name="structure"
+                        value={values.structure}
+                        disabled={isSubmitting}
+                        multiline
+                        minRows={2}
+                        onChange={(evt) =>
+                          setFieldValue("structure", evt.target.value)
+                        }
+                      ></TextField>
+                      <TextField
+                        required
+                        label="Pekerjaan Struktur"
+                        name="base_building"
+                        value={values.base_building}
+                        disabled={isSubmitting}
+                        multiline
+                        minRows={2}
+                        onChange={(evt) =>
+                          setFieldValue("base_building", evt.target.value)
+                        }
+                      ></TextField>
+                      <TextField
+                        required
+                        label="Instruksi Dari Pengawasan Dinas"
+                        name="supervisor_instruction"
+                        value={values.supervisor_instruction}
+                        disabled={isSubmitting}
+                        multiline
+                        minRows={2}
+                        onChange={(evt) =>
+                          setFieldValue(
+                            "supervisor_instruction",
+                            evt.target.value
+                          )
+                        }
+                      ></TextField>
+                    </>
+                  ) : (
+                    <>
+                      <TextField
+                        required
+                        label="Kelayakan"
+                        name="worthiness"
+                        type="number"
+                        value={values.worthiness}
+                        disabled={isSubmitting}
+                        onChange={(evt) =>
+                          setFieldValue("worthiness", evt.target.value)
+                        }
+                      ></TextField>
+                      <TextField
+                        required
+                        label="Kondisi"
+                        name="condition"
+                        value={values.condition}
+                        disabled={isSubmitting}
+                        multiline
+                        minRows={2}
+                        onChange={(evt) =>
+                          setFieldValue("condition", evt.target.value)
+                        }
+                      ></TextField>
+                    </>
+                  )}
+                  {(is_root || is_supervisor || is_root || is_admin) && (
+                    <Button
+                      disableElevation
+                      type="submit"
+                      size="large"
+                      disabled={isSubmitting}
+                      variant="contained"
+                    >
+                      {dialogValue.id ? "Perbaharui" : "Buat"}
+                    </Button>
+                  )}
                 </Box>
               </Form>
             )}

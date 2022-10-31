@@ -11,6 +11,10 @@ import Alert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import Avatar from "@mui/material/Avatar";
 import Typography from "@mui/material/Typography";
+import List from "@mui/material/List";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
 
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -31,6 +35,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import FoundationIcon from "@mui/icons-material/Foundation";
 import ComputerIcon from "@mui/icons-material/Computer";
+import CircleIcon from "@mui/icons-material/Circle";
 
 import Battery20Icon from "@mui/icons-material/Battery20";
 import Battery30Icon from "@mui/icons-material/Battery30";
@@ -50,14 +55,36 @@ import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
 
 import BatteryUnknownIcon from "@mui/icons-material/BatteryUnknown";
 
+import NoSsr from "@mui/material/NoSsr";
+
+import "mapbox-gl/dist/mapbox-gl.css";
+import {
+  Map,
+  useMap,
+  MapProvider,
+  Marker,
+  Popup,
+  Source,
+  Layer,
+  AttributionControl,
+  GeolocateControl,
+  NavigationControl,
+  ScaleControl,
+} from "react-map-gl";
+import { MAP } from "@/lib/const";
+
 import AdminShell from "@/layout/AdminShell";
 import ContextAuthenticate from "@/context/authenticate";
 import AdminContext from "@/context/admin";
-import { useGlobal } from "@/lib/helper-ui";
+import { useGlobal, capitalize_each_word } from "@/lib/helper-ui";
 import { useStatsQuery, useSystemQuery } from "@/store/models";
+import { useGetAllQuery } from "@/store/projects";
 
 const stats = [];
-
+/**
+ * @type {import('mapbox-gl').Map}
+ */
+let map;
 export default function Dashboard(props) {
   const router = useRouter();
   const theme = useTheme();
@@ -73,6 +100,15 @@ export default function Dashboard(props) {
     isSuccess: is_success_stat,
     isError: is_error_stat,
   } = useStatsQuery({ token: user.token });
+  const {
+    data: raw_projects = [],
+    error: error_projects,
+    isLoading: is_loading_project,
+    isFetching: is_fetching_project,
+    isSuccess: is_success_project,
+    isError: is_error_project,
+    // @ts-ignore
+  } = useGetAllQuery({ token: user.token });
   const {
     // data: system,
     error: error_system,
@@ -93,7 +129,41 @@ export default function Dashboard(props) {
     timeout: 6000,
     message: <div></div>,
   });
+  const [have_map, set_have_map] = useState(null);
+  const [selected_tab, set_selected_tab] = useState(0);
+  const [selected_marker, set_selected_marker] = useState(0);
+  const [list_message, set_list_message] = useState("");
+  const [selected_sub_district, set_selected_sub_district] = useState("");
 
+  let project_status_filter = ".*";
+  let project_status = "All";
+  let projects = [];
+  switch (selected_tab) {
+    case 1:
+      project_status = project_status_filter = "Pembangunan";
+      break;
+    case 2:
+      project_status = project_status_filter = "Perawatan";
+      break;
+  }
+  if (selected_sub_district) {
+    project_status += ` ${selected_sub_district}`;
+  }
+  projects = raw_projects.filter((item) => {
+    const address = new RegExp(`${selected_sub_district || ".*"}`).test(
+      item.address.join(" ")
+    );
+    const status = new RegExp(`${project_status_filter}`).test(item.status);
+    return status && address;
+  });
+  project_status += ` (${projects.length})`;
+
+  useEffect(() => {
+    if (!map) {
+      set_have_map(false);
+    } else {
+    }
+  }, [map]);
   useEffect(() => {
     ctx_admin.set_ctx_data({
       title: "Dashboard",
@@ -198,6 +268,118 @@ export default function Dashboard(props) {
       }
       return error.data.message;
     }
+  }
+  function handle_list_click(event, item) {
+    set_selected_marker(item.id);
+    map.flyTo({ center: item.coordinate, zoom: 11 });
+  }
+  function handle_load(event) {
+    map = event.target;
+    set_have_map(true);
+    let hoveredStateId = null;
+    let firstSymbolId = null;
+    const layers = map.getStyle().layers;
+    for (const layer of layers) {
+      if (layer.type === "symbol") {
+        firstSymbolId = layer.id;
+        break;
+      }
+    }
+    map.addSource("wajo", {
+      type: "geojson",
+      data: "/data/wajo.json",
+    });
+    map.addLayer(
+      {
+        id: "state-fills",
+        type: "fill",
+        source: "wajo",
+        layout: {},
+        paint: {
+          "fill-color": "rgba(200, 100, 240, 1)",
+          "fill-opacity": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            1,
+            0.25,
+          ],
+        },
+      },
+      firstSymbolId
+    );
+    map.addLayer({
+      id: "state-borders",
+      type: "line",
+      source: "wajo",
+      layout: {},
+      paint: {
+        "line-color": "rgba(200, 100, 240, 1)",
+        "line-width": 2,
+      },
+    });
+    map.on("mousemove", "state-fills", (e) => {
+      if (e.features.length > 0) {
+        if (hoveredStateId !== null) {
+          map.setFeatureState(
+            { source: "wajo", id: hoveredStateId },
+            { hover: false }
+          );
+        }
+        hoveredStateId = e.features[0].id;
+        map.setFeatureState(
+          { source: "wajo", id: hoveredStateId },
+          { hover: true }
+        );
+      }
+    });
+    map.on("mouseleave", "state-fills", () => {
+      if (hoveredStateId !== null) {
+        map.setFeatureState(
+          { source: "wajo", id: hoveredStateId },
+          { hover: false }
+        );
+      }
+      hoveredStateId = null;
+    });
+
+    map.addLayer({
+      id: "wajo-labels",
+      type: "symbol",
+      source: "wajo",
+      layout: {
+        "text-field": [
+          "format",
+          ["upcase", ["get", "Name"]],
+          { "font-scale": 0.75 },
+          "\n",
+          {},
+        ],
+        "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+      },
+      paint: {
+        "text-halo-color": "#000",
+        "text-halo-width": 1,
+        "text-color": "#fff",
+      },
+    });
+
+    map.on("click", "state-fills", (event) => {
+      console.log(event);
+      if (event.features) {
+        const [feature] = event.features;
+        set_selected_sub_district(
+          capitalize_each_word(feature.properties.Name)
+        );
+      }
+      // @ts-ignore
+      map.flyTo({ center: event.lngLat.toArray(), zoom: 10 });
+    });
+    map.on("mouseenter", "state-fills", () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+    map.on("mouseleave", "state-fills", () => {
+      map.getCanvas().style.cursor = "";
+    });
   }
 
   const CardStatSkeleton = (
@@ -433,92 +615,81 @@ export default function Dashboard(props) {
               </Card>
             )}
           </Grid>
-          <Grid item xs={1} sm={2} md={2} lg={2} xl={2}>
+          <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
             {is_fetching_stat && CardStatSkeleton}
             {is_success_stat && (
-              <Card variant="outlined" sx={{ position: "relative" }}>
-                <CardActionArea>
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between">
-                      <Box display="grid">
-                        <Typography
-                          variant="subtitle1"
-                          component="div"
-                          fontWeight="medium"
-                          sx={{ opacity: "0.9" }}
+              <Grid container spacing={{ xs: 2, sm: 2, md: 4, lg: 4, xl: 8 }}>
+                <Grid
+                  item
+                  xs={1}
+                  sm={8}
+                  sx={{ aspectRatio: { xs: "1", sm: "2 / 1.25" } }}
+                >
+                  <NoSsr>
+                    <Map
+                      mapboxAccessToken={MAP.TOKEN}
+                      initialViewState={{
+                        longitude: MAP.LNG,
+                        latitude: MAP.LAT,
+                        zoom: MAP.ZOOM,
+                      }}
+                      style={{ borderRadius: "6px" }}
+                      mapStyle={"mapbox://styles/mapbox/dark-v10"}
+                      onLoad={handle_load}
+                    >
+                      {/* <GeolocateControl /> */}
+                      <NavigationControl />
+                      <ScaleControl />
+                      {/* <Source id="my-data" type="geojson" data={geojson}>
+                      <Layer {...layerStyle} />
+                    </Source> */}
+                      {projects.map((item) => (
+                        <Marker
+                          key={"marker" + item.name}
+                          longitude={item.coordinate[0]}
+                          latitude={item.coordinate[1]}
+                          anchor="bottom"
                         >
-                          Warn
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          component="div"
-                          sx={{ opacity: "1" }}
+                          <CircleIcon color="primary" fontSize="medium" />
+                        </Marker>
+                      ))}
+                    </Map>
+                  </NoSsr>
+                </Grid>
+                <Grid item xs={1} sm={4}>
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      height: "100%",
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ px: theme.spacing(2), pt: theme.spacing(2) }}
+                    >
+                      View {project_status}
+                    </Typography>
+                    <List component="nav" aria-label="list projects">
+                      {projects.map((item) => (
+                        <ListItemButton
+                          key={"list" + item.name}
+                          selected={selected_marker == item.id}
+                          disabled={!have_map}
+                          onClick={(event) => handle_list_click(event, item)}
                         >
-                          {0}
-                        </Typography>
-                      </Box>
-                      <Paper
-                        variant="elevation"
-                        elevation={2}
-                        sx={{
-                          display: "grid",
-                          placeContent: "center",
-                          width: 44,
-                          height: 44,
-                          borderRadius: 4,
-                          boxShadow: "none",
-                        }}
-                      >
-                        <WarningAmberIcon fontSize="medium" />
-                      </Paper>
-                    </Box>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            )}
-          </Grid>
-          <Grid item xs={1} sm={2} md={2} lg={2} xl={2}>
-            {is_fetching_stat && CardStatSkeleton}
-            {is_success_stat && (
-              <Card variant="outlined" sx={{ position: "relative" }}>
-                <CardActionArea>
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between">
-                      <Box display="grid">
-                        <Typography
-                          variant="subtitle1"
-                          component="div"
-                          fontWeight="medium"
-                          sx={{ opacity: "0.9" }}
-                        >
-                          Error
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          component="div"
-                          sx={{ opacity: "1" }}
-                        >
-                          {0}
-                        </Typography>
-                      </Box>
-                      <Paper
-                        variant="elevation"
-                        elevation={2}
-                        sx={{
-                          display: "grid",
-                          placeContent: "center",
-                          width: 44,
-                          height: 44,
-                          borderRadius: 4,
-                          boxShadow: "none",
-                        }}
-                      >
-                        <ErrorOutlineIcon fontSize="medium" />
-                      </Paper>
-                    </Box>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
+                          <ListItemAvatar>
+                            <Avatar alt={item.name} src={item.image} />
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={item.name}
+                            secondary={item.address.slice(2).join(", ")}
+                          />
+                        </ListItemButton>
+                      ))}
+                    </List>
+                  </Paper>
+                </Grid>
+              </Grid>
             )}
           </Grid>
         </Grid>

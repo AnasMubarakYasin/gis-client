@@ -95,6 +95,8 @@ export default function Reports(props) {
   const [openDialog, setOpenDialog] = useState(false);
   const [openDialogAdd, setOpenDialogAdd] = useState(false);
   const [buttonToggleGroup, setButtonToggleGroup] = useState([]);
+  const [project_maintenance, set_project_maintenance] = useState([]);
+  const [project_development, set_project_development] = useState([]);
   const [dialogValue, setDialogValue] = useState({
     id: "dialog-report",
     image: "",
@@ -112,6 +114,9 @@ export default function Reports(props) {
     vertical: "bottom",
     horizontal: "center",
   });
+  const is_root = user.account.role == "root";
+  const is_admin = user.account.role == "admin";
+  const is_supervisor = user.account.role == "supervisor";
   const handleCreateOrUpdateMember = async (values, { setSubmitting }) => {
     delete values.id;
     delete values.showPassword;
@@ -215,6 +220,17 @@ export default function Reports(props) {
   }, []);
   useEffect(() => {
     if (isSuccess) {
+      const project_developments = [];
+      const project_maintenances = [];
+      for (const project of projects) {
+        if (project.status == "Pembangunan") {
+          project_developments.push(project);
+        } else {
+          project_maintenances.push(project);
+        }
+      }
+      set_project_development(project_developments);
+      set_project_maintenance(project_maintenances);
     }
     if (isError) {
       // @ts-ignore
@@ -307,13 +323,86 @@ export default function Reports(props) {
             </Paper>
           )}
         </Box> */}
-        <Grid
-          container
-          spacing={{ xs: 2, sm: 2, md: 4, lg: 4, xl: 8 }}
-          columns={{ xs: 1, sm: 4, md: 4, lg: 6, xl: 8 }}
+        <Box
+          display="grid"
+          gap={{
+            xs: 2,
+          }}
         >
-          {isLoading &&
-            [10, 20, 30].map((value) => (
+          <Typography variant="h6">Pembangunan</Typography>
+          <Grid
+            container
+            spacing={{ xs: 2, sm: 2, md: 4, lg: 4, xl: 8 }}
+            columns={{ xs: 1, sm: 4, md: 4, lg: 6, xl: 8 }}
+          >
+            {isLoading &&
+              [10, 20, 30].map((value) => (
+                <Grid
+                  item
+                  xs={1}
+                  sm={2}
+                  md={2}
+                  lg={2}
+                  xl={2}
+                  key={`${value}-project`}
+                >
+                  <Card key={value} variant="outlined">
+                    <CardActionArea disableTouchRipple={true}>
+                      <Skeleton animation="wave" variant="rectangular">
+                        <CardMedia
+                          component="img"
+                          sx={{
+                            width: "100%",
+                            height: "auto",
+                            aspectRatio: "4 / 3",
+                            objectFit: "cover",
+                            objectPosition: "center",
+                          }}
+                          image="/proto-512.v2.svg"
+                          alt="Placeholder"
+                        />
+                      </Skeleton>
+                      <CardContent>
+                        <Skeleton animation="wave" variant="text" width="100%">
+                          <Typography
+                            variant="overline"
+                            component="div"
+                            sx={{
+                              textAlign: "left",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: "1",
+                              WebkitBoxOrient: "vertical",
+                            }}
+                          >
+                            .
+                          </Typography>
+                        </Skeleton>
+                        <Skeleton animation="wave" variant="text" width="100%">
+                          <Typography
+                            variant="h6"
+                            component="div"
+                            sx={{
+                              height: "4rem",
+                              textAlign: "left",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: "2",
+                              WebkitBoxOrient: "vertical",
+                            }}
+                            gutterBottom
+                          >
+                            .
+                          </Typography>
+                        </Skeleton>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              ))}
+            {project_development.map((item, index) => (
               <Grid
                 item
                 xs={1}
@@ -321,11 +410,28 @@ export default function Reports(props) {
                 md={2}
                 lg={2}
                 xl={2}
-                key={`${value}-project`}
+                key={`${item.id}-project`}
               >
-                <Card key={value} variant="outlined">
-                  <CardActionArea disableTouchRipple={true}>
-                    <Skeleton animation="wave" variant="rectangular">
+                <Card
+                  variant="outlined"
+                  sx={{
+                    position: "relative",
+                    opacity: isFetching ? ".7" : "1s",
+                  }}
+                >
+                  <Link href={`/admin/reports/${item.id}`}>
+                    <CardActionArea
+                      disabled={isFetching}
+                      onClick={handleCardClick(index)}
+                      href={`/admin/reports/${item.id}`}
+                    >
+                      {removeMode && (
+                        <Checkbox
+                          checked={removeList.includes(index)}
+                          sx={{ position: "absolute", right: 0, top: 0 }}
+                          // onChange={handleRemoveSelection(index)}
+                        />
+                      )}
                       <CardMedia
                         component="img"
                         sx={{
@@ -335,12 +441,10 @@ export default function Reports(props) {
                           objectFit: "cover",
                           objectPosition: "center",
                         }}
-                        image="/proto-512.v2.svg"
-                        alt="Placeholder"
+                        image={item.image}
+                        alt={item.name}
                       />
-                    </Skeleton>
-                    <CardContent>
-                      <Skeleton animation="wave" variant="text" width="100%">
+                      <CardContent>
                         <Typography
                           variant="overline"
                           component="div"
@@ -353,10 +457,8 @@ export default function Reports(props) {
                             WebkitBoxOrient: "vertical",
                           }}
                         >
-                          .
+                          {item.name_company}
                         </Typography>
-                      </Skeleton>
-                      <Skeleton animation="wave" variant="text" width="100%">
                         <Typography
                           variant="h6"
                           component="div"
@@ -369,86 +471,10 @@ export default function Reports(props) {
                             WebkitLineClamp: "2",
                             WebkitBoxOrient: "vertical",
                           }}
-                          gutterBottom
                         >
-                          .
+                          {item.name}
                         </Typography>
-                      </Skeleton>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-            ))}
-          {projects.map((item, index) => (
-            <Grid
-              item
-              xs={1}
-              sm={2}
-              md={2}
-              lg={2}
-              xl={2}
-              key={`${item.id}-project`}
-            >
-              <Card
-                variant="outlined"
-                sx={{ position: "relative", opacity: isFetching ? ".7" : "1s" }}
-              >
-                <Link href={`/admin/reports/${item.id}`}>
-                  <CardActionArea
-                    disabled={isFetching}
-                    onClick={handleCardClick(index)}
-                    href={`/admin/reports/${item.id}`}
-                  >
-                    {removeMode && (
-                      <Checkbox
-                        checked={removeList.includes(index)}
-                        sx={{ position: "absolute", right: 0, top: 0 }}
-                        // onChange={handleRemoveSelection(index)}
-                      />
-                    )}
-                    <CardMedia
-                      component="img"
-                      sx={{
-                        width: "100%",
-                        height: "auto",
-                        aspectRatio: "4 / 3",
-                        objectFit: "cover",
-                        objectPosition: "center",
-                      }}
-                      image={item.image}
-                      alt={item.name}
-                    />
-                    <CardContent>
-                      <Typography
-                        variant="overline"
-                        component="div"
-                        sx={{
-                          textAlign: "left",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: "1",
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {item.name_company}
-                      </Typography>
-                      <Typography
-                        variant="h6"
-                        component="div"
-                        sx={{
-                          height: "4rem",
-                          textAlign: "left",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: "2",
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {item.name}
-                      </Typography>
-                      {/* <Box display="grid" gap="8px">
+                        {/* <Box display="grid" gap="8px">
                       <LinearProgress
                         variant="determinate"
                         value={item.progress}
@@ -460,13 +486,195 @@ export default function Reports(props) {
                         Status: {item.status}
                       </Typography>
                     </Box> */}
-                    </CardContent>
-                  </CardActionArea>
-                </Link>
-              </Card>
+                      </CardContent>
+                    </CardActionArea>
+                  </Link>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+        {(is_root || is_admin) && (
+          <Box
+            display="grid"
+            gap={{
+              xs: 2,
+            }}
+          >
+            <Typography variant="h6">Perawatan</Typography>
+            <Grid
+              container
+              spacing={{ xs: 2, sm: 2, md: 4, lg: 4, xl: 8 }}
+              columns={{ xs: 1, sm: 4, md: 4, lg: 6, xl: 8 }}
+            >
+              {isLoading &&
+                [10, 20, 30].map((value) => (
+                  <Grid
+                    item
+                    xs={1}
+                    sm={2}
+                    md={2}
+                    lg={2}
+                    xl={2}
+                    key={`${value}-project`}
+                  >
+                    <Card key={value} variant="outlined">
+                      <CardActionArea disableTouchRipple={true}>
+                        <Skeleton animation="wave" variant="rectangular">
+                          <CardMedia
+                            component="img"
+                            sx={{
+                              width: "100%",
+                              height: "auto",
+                              aspectRatio: "4 / 3",
+                              objectFit: "cover",
+                              objectPosition: "center",
+                            }}
+                            image="/proto-512.v2.svg"
+                            alt="Placeholder"
+                          />
+                        </Skeleton>
+                        <CardContent>
+                          <Skeleton
+                            animation="wave"
+                            variant="text"
+                            width="100%"
+                          >
+                            <Typography
+                              variant="overline"
+                              component="div"
+                              sx={{
+                                textAlign: "left",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                display: "-webkit-box",
+                                WebkitLineClamp: "1",
+                                WebkitBoxOrient: "vertical",
+                              }}
+                            >
+                              .
+                            </Typography>
+                          </Skeleton>
+                          <Skeleton
+                            animation="wave"
+                            variant="text"
+                            width="100%"
+                          >
+                            <Typography
+                              variant="h6"
+                              component="div"
+                              sx={{
+                                height: "4rem",
+                                textAlign: "left",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                display: "-webkit-box",
+                                WebkitLineClamp: "2",
+                                WebkitBoxOrient: "vertical",
+                              }}
+                              gutterBottom
+                            >
+                              .
+                            </Typography>
+                          </Skeleton>
+                        </CardContent>
+                      </CardActionArea>
+                    </Card>
+                  </Grid>
+                ))}
+              {project_maintenance.map((item, index) => (
+                <Grid
+                  item
+                  xs={1}
+                  sm={2}
+                  md={2}
+                  lg={2}
+                  xl={2}
+                  key={`${item.id}-project`}
+                >
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      position: "relative",
+                      opacity: isFetching ? ".7" : "1s",
+                    }}
+                  >
+                    <Link href={`/admin/reports/${item.id}`}>
+                      <CardActionArea
+                        disabled={isFetching}
+                        onClick={handleCardClick(index)}
+                        href={`/admin/reports/${item.id}`}
+                      >
+                        {removeMode && (
+                          <Checkbox
+                            checked={removeList.includes(index)}
+                            sx={{ position: "absolute", right: 0, top: 0 }}
+                            // onChange={handleRemoveSelection(index)}
+                          />
+                        )}
+                        <CardMedia
+                          component="img"
+                          sx={{
+                            width: "100%",
+                            height: "auto",
+                            aspectRatio: "4 / 3",
+                            objectFit: "cover",
+                            objectPosition: "center",
+                          }}
+                          image={item.image}
+                          alt={item.name}
+                        />
+                        <CardContent>
+                          <Typography
+                            variant="overline"
+                            component="div"
+                            sx={{
+                              textAlign: "left",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: "1",
+                              WebkitBoxOrient: "vertical",
+                            }}
+                          >
+                            {item.name_company}
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            component="div"
+                            sx={{
+                              height: "4rem",
+                              textAlign: "left",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: "2",
+                              WebkitBoxOrient: "vertical",
+                            }}
+                          >
+                            {item.name}
+                          </Typography>
+                          {/* <Box display="grid" gap="8px">
+                      <LinearProgress
+                        variant="determinate"
+                        value={item.progress}
+                      ></LinearProgress>
+                      <Typography variant="body2">
+                        Progress: {item.progress}%
+                      </Typography>
+                      <Typography variant="body2">
+                        Status: {item.status}
+                      </Typography>
+                    </Box> */}
+                        </CardContent>
+                      </CardActionArea>
+                    </Link>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          ))}
-        </Grid>
+          </Box>
+        )}
       </Box>
       <Dialog
         open={openDialog}

@@ -64,6 +64,8 @@ export default function Projects(props) {
       isError: isRemovingError,
     },
   ] = useDeleteByIdMutation();
+  const [project_maintenance, set_project_maintenance] = useState([]);
+  const [project_development, set_project_development] = useState([]);
   const [get_temp_project, set_temp_project] = useGlobal("project", () => null);
   const [get_temp_file, set_temp_file] = useGlobal("project-file", () => null);
   const [selectMode, setSelectMode] = useState(false);
@@ -74,6 +76,9 @@ export default function Projects(props) {
     open: false,
     message: <div></div>,
   });
+  const is_root = user.account.role == "root";
+  const is_admin = user.account.role == "admin";
+  const is_supervisor = user.account.role == "supervisor";
   const handleCardClicked = (index, name) => () => {
     if (selectMode) {
       if (selected.includes(index)) {
@@ -127,6 +132,17 @@ export default function Projects(props) {
   useEffect(() => {
     if (isSuccess) {
       // ctx_auth.open_signin(false);
+      const project_developments = [];
+      const project_maintenances = [];
+      for (const project of projects) {
+        if (project.status == "Pembangunan") {
+          project_developments.push(project);
+        } else {
+          project_maintenances.push(project);
+        }
+      }
+      set_project_development(project_developments);
+      set_project_maintenance(project_maintenances);
     }
     if (isError) {
       // @ts-ignore
@@ -189,83 +205,30 @@ export default function Projects(props) {
       <Box
         display="grid"
         padding={{
-          xs: "16px",
-          sm: "32px",
+          xs: 2,
+          sm: 3,
         }}
         gap={{
-          xs: "16px",
-          sm: "32px",
+          xs: 2,
+          sm: 3,
         }}
       >
-        <Box
-          display="flex"
-          gap={{
-            xs: "16px",
-            sm: "32px",
-          }}
-        >
-          <ButtonGroup
-            variant="contained"
-            disableElevation
-            aria-label="outlined primary button group"
+        {(is_root || is_admin) && (
+          <Box
+            display="flex"
+            gap={{
+              xs: 2,
+              sm: 4,
+            }}
           >
-            <Tooltip title="Create Project">
-              <Button
-                startIcon={<AddIcon />}
-                sx={{
-                  display: "grid",
-                  placeContent: "center",
-                  placeItems: "center",
-                  minWidth: "auto",
-                  padding: "12px",
-                  "& .MuiButton-startIcon": {
-                    margin: "0",
-                  },
-                }}
-                onClick={handleCreateProject}
-              ></Button>
-            </Tooltip>
-            <Tooltip title="Selection Mode">
-              <Button
-                startIcon={<CheckIcon />}
-                sx={{
-                  display: "grid",
-                  placeContent: "center",
-                  placeItems: "center",
-                  minWidth: "auto",
-                  padding: "12px",
-                  "& .MuiButton-startIcon": {
-                    margin: "0",
-                  },
-                }}
-                onClick={handleSelect}
-              ></Button>
-            </Tooltip>
-            <Tooltip title="More Option">
-              <Button
-                startIcon={<MoreVertIcon />}
-                sx={{
-                  display: "grid",
-                  placeContent: "center",
-                  placeItems: "center",
-                  minWidth: "auto",
-                  padding: "12px",
-                  "& .MuiButton-startIcon": {
-                    margin: "0",
-                  },
-                }}
-              ></Button>
-            </Tooltip>
-          </ButtonGroup>
-          {selectMode && (
             <ButtonGroup
               variant="contained"
               disableElevation
               aria-label="outlined primary button group"
             >
-              <Tooltip title="Delete Project">
+              <Tooltip title="Create Project">
                 <Button
-                  startIcon={<DeleteOutlineIcon />}
+                  startIcon={<AddIcon />}
                   sx={{
                     display: "grid",
                     placeContent: "center",
@@ -276,12 +239,12 @@ export default function Projects(props) {
                       margin: "0",
                     },
                   }}
-                  onClick={handleDialogOpen}
+                  onClick={handleCreateProject}
                 ></Button>
               </Tooltip>
-              <Tooltip title="Cancel">
+              <Tooltip title="Selection Mode">
                 <Button
-                  startIcon={<ClearIcon />}
+                  startIcon={<CheckIcon />}
                   sx={{
                     display: "grid",
                     placeContent: "center",
@@ -292,12 +255,12 @@ export default function Projects(props) {
                       margin: "0",
                     },
                   }}
-                  onClick={handleCancel}
+                  onClick={handleSelect}
                 ></Button>
               </Tooltip>
-              <Tooltip title="Done">
+              <Tooltip title="More Option">
                 <Button
-                  startIcon={<DoneIcon />}
+                  startIcon={<MoreVertIcon />}
                   sx={{
                     display: "grid",
                     placeContent: "center",
@@ -308,139 +271,201 @@ export default function Projects(props) {
                       margin: "0",
                     },
                   }}
-                  onClick={handleDone}
                 ></Button>
               </Tooltip>
             </ButtonGroup>
-          )}
-        </Box>
+            {selectMode && (
+              <ButtonGroup
+                variant="contained"
+                disableElevation
+                aria-label="outlined primary button group"
+              >
+                <Tooltip title="Delete Project">
+                  <Button
+                    startIcon={<DeleteOutlineIcon />}
+                    sx={{
+                      display: "grid",
+                      placeContent: "center",
+                      placeItems: "center",
+                      minWidth: "auto",
+                      padding: "12px",
+                      "& .MuiButton-startIcon": {
+                        margin: "0",
+                      },
+                    }}
+                    onClick={handleDialogOpen}
+                  ></Button>
+                </Tooltip>
+                <Tooltip title="Cancel">
+                  <Button
+                    startIcon={<ClearIcon />}
+                    sx={{
+                      display: "grid",
+                      placeContent: "center",
+                      placeItems: "center",
+                      minWidth: "auto",
+                      padding: "12px",
+                      "& .MuiButton-startIcon": {
+                        margin: "0",
+                      },
+                    }}
+                    onClick={handleCancel}
+                  ></Button>
+                </Tooltip>
+                <Tooltip title="Done">
+                  <Button
+                    startIcon={<DoneIcon />}
+                    sx={{
+                      display: "grid",
+                      placeContent: "center",
+                      placeItems: "center",
+                      minWidth: "auto",
+                      padding: "12px",
+                      "& .MuiButton-startIcon": {
+                        margin: "0",
+                      },
+                    }}
+                    onClick={handleDone}
+                  ></Button>
+                </Tooltip>
+              </ButtonGroup>
+            )}
+          </Box>
+        )}
         <Box
           display="grid"
-          gridTemplateColumns={{
-            xs: "1fr",
-            sm: "1fr 1fr",
-            md: "1fr 1fr 1fr",
-          }}
-          gridTemplateRows="auto"
           gap={{
-            xs: "16px",
-            sm: "32px",
+            xs: 2,
           }}
         >
-          {isLoading &&
-            [1, 2, 3].map((value) => (
-              <Card key={value} variant="outlined">
-                <CardActionArea disableTouchRipple={true}>
-                  <Skeleton animation="wave" variant="rectangular">
-                    <CardMedia
-                      component="img"
-                      sx={{
-                        width: "100%",
-                        height: "auto",
-                        aspectRatio: "4 / 3",
-                        objectFit: "cover",
-                        objectPosition: "center",
-                      }}
-                      image="/proto-512.v2.svg"
-                      alt="Placeholder"
+          <Typography variant="h6">Pembangunan</Typography>
+          <Box
+            display="grid"
+            gridTemplateColumns={{
+              xs: "1fr",
+              sm: "1fr 1fr",
+              md: "1fr 1fr 1fr",
+            }}
+            gridTemplateRows="auto"
+            gap={{
+              xs: 2,
+              sm: 4,
+            }}
+          >
+            {isLoading &&
+              [1, 2, 3].map((value) => (
+                <Card key={value} variant="outlined">
+                  <CardActionArea disableTouchRipple={true}>
+                    <Skeleton animation="wave" variant="rectangular">
+                      <CardMedia
+                        component="img"
+                        sx={{
+                          width: "100%",
+                          height: "auto",
+                          aspectRatio: "4 / 3",
+                          objectFit: "cover",
+                          objectPosition: "center",
+                        }}
+                        image="/proto-512.v2.svg"
+                        alt="Placeholder"
+                      />
+                    </Skeleton>
+                    <CardContent>
+                      <Skeleton animation="wave" variant="text" width="100%">
+                        <Typography
+                          variant="overline"
+                          component="div"
+                          sx={{
+                            textAlign: "left",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: "1",
+                            WebkitBoxOrient: "vertical",
+                          }}
+                        >
+                          .
+                        </Typography>
+                      </Skeleton>
+                      <Skeleton animation="wave" variant="text" width="100%">
+                        <Typography
+                          variant="h6"
+                          component="div"
+                          sx={{
+                            height: "4rem",
+                            textAlign: "left",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: "2",
+                            WebkitBoxOrient: "vertical",
+                          }}
+                          gutterBottom
+                        >
+                          .
+                        </Typography>
+                      </Skeleton>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              ))}
+            {project_development.map((project, index) => (
+              <Card variant="outlined" key={project.id}>
+                <CardActionArea
+                  onClick={handleCardClicked(index, project.name)}
+                  disableRipple={isFetching}
+                  sx={{ opacity: isFetching ? ".7" : "1" }}
+                >
+                  {selectMode && (
+                    <Checkbox
+                      sx={{ position: "absolute", right: 0, top: 0 }}
+                      checked={selected.includes(index)}
                     />
-                  </Skeleton>
-                  <CardContent>
-                    <Skeleton animation="wave" variant="text" width="100%">
-                      <Typography
-                        variant="overline"
-                        component="div"
-                        sx={{
-                          textAlign: "left",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: "1",
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        .
-                      </Typography>
-                    </Skeleton>
-                    <Skeleton animation="wave" variant="text" width="100%">
-                      <Typography
-                        variant="h6"
-                        component="div"
-                        sx={{
-                          height: "4rem",
-                          textAlign: "left",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: "2",
-                          WebkitBoxOrient: "vertical",
-                        }}
-                        gutterBottom
-                      >
-                        .
-                      </Typography>
-                    </Skeleton>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            ))}
-          {projects.map((project, index) => (
-            <Card variant="outlined" key={project.id}>
-              <CardActionArea
-                onClick={handleCardClicked(index, project.name)}
-                disableRipple={isFetching}
-                sx={{ opacity: isFetching ? ".7" : "1" }}
-              >
-                {selectMode && (
-                  <Checkbox
-                    sx={{ position: "absolute", right: 0, top: 0 }}
-                    checked={selected.includes(index)}
+                  )}
+                  <CardMedia
+                    component="img"
+                    sx={{
+                      width: "100%",
+                      height: "auto",
+                      aspectRatio: "4 / 3",
+                      objectFit: "cover",
+                      objectPosition: "center",
+                    }}
+                    image={project.image}
+                    alt={project.name}
                   />
-                )}
-                <CardMedia
-                  component="img"
-                  sx={{
-                    width: "100%",
-                    height: "auto",
-                    aspectRatio: "4 / 3",
-                    objectFit: "cover",
-                    objectPosition: "center",
-                  }}
-                  image={project.image}
-                  alt={project.name}
-                />
-                <CardContent>
-                  <Typography
-                    variant="overline"
-                    component="div"
-                    sx={{
-                      textAlign: "left",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
-                      WebkitLineClamp: "1",
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {project.name_company}
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    component="div"
-                    sx={{
-                      height: "4rem",
-                      textAlign: "left",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
-                      WebkitLineClamp: "2",
-                      WebkitBoxOrient: "vertical",
-                    }}
-                    gutterBottom
-                  >
-                    {project.name}
-                  </Typography>
-                  {/* <Box display="grid" gap="8px">
+                  <CardContent>
+                    <Typography
+                      variant="overline"
+                      component="div"
+                      sx={{
+                        textAlign: "left",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: "1",
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
+                      {project.name_company}
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      sx={{
+                        height: "4rem",
+                        textAlign: "left",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: "2",
+                        WebkitBoxOrient: "vertical",
+                      }}
+                      gutterBottom
+                    >
+                      {project.name}
+                    </Typography>
+                    {/* <Box display="grid" gap="8px">
                     <LinearProgress
                       variant="determinate"
                       value={project.progress}
@@ -452,10 +477,165 @@ export default function Projects(props) {
                       Status: {project.status}
                     </Typography>
                   </Box> */}
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          ))}
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            ))}
+          </Box>
+        </Box>
+        <Box
+          display="grid"
+          gap={{
+            xs: 2,
+          }}
+          sx={{
+            display: is_supervisor ? "none" : "grid",
+          }}
+        >
+          <Typography variant="h6">Perawatan</Typography>
+          <Box
+            display="grid"
+            gridTemplateColumns={{
+              xs: "1fr",
+              sm: "1fr 1fr",
+              md: "1fr 1fr 1fr",
+            }}
+            gridTemplateRows="auto"
+            gap={{
+              xs: 2,
+              sm: 4,
+            }}
+          >
+            {isLoading &&
+              [1, 2, 3].map((value) => (
+                <Card key={value} variant="outlined">
+                  <CardActionArea disableTouchRipple={true}>
+                    <Skeleton animation="wave" variant="rectangular">
+                      <CardMedia
+                        component="img"
+                        sx={{
+                          width: "100%",
+                          height: "auto",
+                          aspectRatio: "4 / 3",
+                          objectFit: "cover",
+                          objectPosition: "center",
+                        }}
+                        image="/proto-512.v2.svg"
+                        alt="Placeholder"
+                      />
+                    </Skeleton>
+                    <CardContent>
+                      <Skeleton animation="wave" variant="text" width="100%">
+                        <Typography
+                          variant="overline"
+                          component="div"
+                          sx={{
+                            textAlign: "left",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: "1",
+                            WebkitBoxOrient: "vertical",
+                          }}
+                        >
+                          .
+                        </Typography>
+                      </Skeleton>
+                      <Skeleton animation="wave" variant="text" width="100%">
+                        <Typography
+                          variant="h6"
+                          component="div"
+                          sx={{
+                            height: "4rem",
+                            textAlign: "left",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: "2",
+                            WebkitBoxOrient: "vertical",
+                          }}
+                          gutterBottom
+                        >
+                          .
+                        </Typography>
+                      </Skeleton>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              ))}
+            {project_maintenance.map((project, index) => (
+              <Card variant="outlined" key={project.id}>
+                <CardActionArea
+                  onClick={handleCardClicked(index, project.name)}
+                  disableRipple={isFetching}
+                  sx={{ opacity: isFetching ? ".7" : "1" }}
+                >
+                  {selectMode && (
+                    <Checkbox
+                      sx={{ position: "absolute", right: 0, top: 0 }}
+                      checked={selected.includes(index)}
+                    />
+                  )}
+                  <CardMedia
+                    component="img"
+                    sx={{
+                      width: "100%",
+                      height: "auto",
+                      aspectRatio: "4 / 3",
+                      objectFit: "cover",
+                      objectPosition: "center",
+                    }}
+                    image={project.image}
+                    alt={project.name}
+                  />
+                  <CardContent>
+                    <Typography
+                      variant="overline"
+                      component="div"
+                      sx={{
+                        textAlign: "left",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: "1",
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
+                      {project.name_company}
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      component="div"
+                      sx={{
+                        height: "4rem",
+                        textAlign: "left",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: "2",
+                        WebkitBoxOrient: "vertical",
+                      }}
+                      gutterBottom
+                    >
+                      {project.name}
+                    </Typography>
+                    {/* <Box display="grid" gap="8px">
+                    <LinearProgress
+                      variant="determinate"
+                      value={project.progress}
+                    ></LinearProgress>
+                    <Typography variant="body2">
+                      Progress: {project.progress}%
+                    </Typography>
+                    <Typography variant="body2">
+                      Status: {project.status}
+                    </Typography>
+                  </Box> */}
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            ))}
+          </Box>
         </Box>
       </Box>
       <Dialog

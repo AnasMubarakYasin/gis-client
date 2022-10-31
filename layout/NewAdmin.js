@@ -51,7 +51,7 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import SecurityIcon from "@mui/icons-material/Security";
-import HeightIcon from '@mui/icons-material/Height';
+import HeightIcon from "@mui/icons-material/Height";
 
 import Footer from "@/components/Footer";
 
@@ -74,7 +74,11 @@ const drawerNavigation = [
   // { text: "Roles", icon: <WorkspacesIcon />, link: "/admin/roles" },
   { text: "Reports", icon: <AssignmentIcon />, link: "/admin/reports" },
   { text: "Members", icon: <GroupIcon />, link: "/admin/members" },
-  { text: "Distance", icon: <HeightIcon sx={{transform: 'rotate(90deg)'}} />, link: "/admin/distance" },
+  {
+    text: "Distance",
+    icon: <HeightIcon sx={{ transform: "rotate(90deg)" }} />,
+    link: "/admin/distance",
+  },
   // { text: "Sign In", icon: <LoginIcon />, link: "/admin/signin" },
   // { text: "Sign Up", icon: <AssignmentIndIcon />, link: "/admin/signup" },
   {
@@ -84,18 +88,17 @@ const drawerNavigation = [
       {
         text: "Project",
         icon: <GridViewRoundedIcon />,
-        link: '/admin/logs/projects',
+        link: "/admin/logs/projects",
       },
       {
         text: "Report",
         icon: <AssignmentIcon />,
-        link: '/admin/logs/reports',
-
+        link: "/admin/logs/reports",
       },
       {
         text: "Auth",
         icon: <SecurityIcon />,
-        link: '/admin/logs/auth',
+        link: "/admin/logs/auth",
       },
     ],
     link: "",
@@ -233,6 +236,14 @@ export default function Admin(props) {
   const [anchorMenu, setAnchoMenu] = useState(null);
   const [openDrawer, setDrawerOpen] = useState(true);
   const [navToggleList, setNavToggleList] = useState([]);
+  // const [navs, setNavToggleList] = useState([]);
+  const is_root = user.account.role == "root";
+  const is_admin = user.account.role == "admin";
+  const is_supervisor = user.account.role == "supervisor";
+  // if (is_supervisor) {
+  //   // console.log(drawerNavigation.splice(0, 1));
+  //   drawerNavigation.shift();
+  // }
   const handleDrawer = () => {
     setDrawerOpen(!openDrawer);
   };
