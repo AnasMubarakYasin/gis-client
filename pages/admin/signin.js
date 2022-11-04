@@ -121,7 +121,12 @@ function PageSignin(props) {
           </Alert>
         ),
       }));
-      router.push("/admin/dashboard");
+      console.log(data);
+      if (data.user.role == "root" || data.user.role == "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/admin/projects");
+      }
     }
     if (isError) {
       setSnack((prev) => ({
@@ -278,13 +283,13 @@ function PageSignin(props) {
                           label="Remember Password"
                         />
                       </FormGroup>
-                      <Typography variant="subtitle2" marginTop=".5rem">
+                      {/* <Typography variant="subtitle2" marginTop=".5rem">
                         <Link href="forgot">
                           <MUILink href="forgot" underline="hover">
                             Forgot Password?
                           </MUILink>
                         </Link>
-                      </Typography>
+                      </Typography> */}
                     </Box>
                   </Box>
                 </Box>
@@ -299,14 +304,14 @@ function PageSignin(props) {
                   >
                     Login
                   </Button>
-                  <Typography variant="body2" textAlign="center">
+                  {/* <Typography variant="body2" textAlign="center">
                     Don{"'"}t have an account?
                     <Link href="signup">
                       <MUILink href="signup" underline="hover">
                         Create Account
                       </MUILink>
                     </Link>
-                  </Typography>
+                  </Typography> */}
                 </Box>
               </Paper>
             </Form>

@@ -151,7 +151,7 @@ export default function Reports(props) {
     base_building: "",
     structure: "",
     supervisor_instruction: "",
-    worthiness: "",
+    worthiness: 0,
     condition: "",
     project_copy: project,
   });
@@ -270,7 +270,7 @@ export default function Reports(props) {
       base_building: "",
       structure: "",
       supervisor_instruction: "",
-      worthiness: "",
+      worthiness: 0,
       condition: "",
       project_copy: {},
     });

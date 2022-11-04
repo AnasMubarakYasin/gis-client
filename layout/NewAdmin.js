@@ -205,6 +205,7 @@ export default function Admin(props) {
     title: "",
     active_link: "",
   });
+  const [navigations, setNavigations] = useState(drawerNavigation);
   const [loaderProgress, setLoaderProgress] = useState({
     show: false,
     backdrop: false,
@@ -283,10 +284,30 @@ export default function Admin(props) {
     router.events.on("routeChangeStart", handleRouteChangeStart);
     router.events.on("routeChangeComplete", handleRouteChangeComplete);
 
-    // return () => {
-    //   router.events.off("routeChangeStart", handleRouteChangeStart);
-    //   router.events.off("routeChangeComplete", handleRouteChangeComplete);
-    // };
+    if (is_admin) {
+      setNavigations(
+        drawerNavigation.filter((item) => {
+          if (item.text == "Logs" || item.text == "Models") {
+            return false;
+          }
+          return true;
+        })
+      );
+    } else if (is_supervisor) {
+      setNavigations(
+        drawerNavigation.filter((item) => {
+          if (
+            item.text == "Dashboard" ||
+            item.text == "Members" ||
+            item.text == "Logs" ||
+            item.text == "Models"
+          ) {
+            return false;
+          }
+          return true;
+        })
+      );
+    }
   }, []);
   useEffect(() => {
     if (signout_isSuccess) {
@@ -495,7 +516,7 @@ export default function Admin(props) {
             </DrawerHeader>
             <Divider />
             <List>
-              {drawerNavigation.map(({ text, icon, link, sub }, index) => (
+              {navigations.map(({ text, icon, link, sub }, index) => (
                 <div key={text}>
                   {sub ? (
                     <>

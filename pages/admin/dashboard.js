@@ -621,7 +621,7 @@ export default function Dashboard(props) {
               <Grid container spacing={{ xs: 2, sm: 2, md: 4, lg: 4, xl: 8 }}>
                 <Grid
                   item
-                  xs={1}
+                  xs={12}
                   sm={8}
                   sx={{ aspectRatio: { xs: "1", sm: "2 / 1.25" } }}
                 >
@@ -656,7 +656,7 @@ export default function Dashboard(props) {
                     </Map>
                   </NoSsr>
                 </Grid>
-                <Grid item xs={1} sm={4}>
+                <Grid item xs={12} sm={4}>
                   <Paper
                     variant="outlined"
                     sx={{

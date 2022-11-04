@@ -62,6 +62,18 @@ const columns = [
     editable: true,
   },
   {
+    field: "worthiness",
+    headerName: "Worthiness",
+    // flex: 1,
+    editable: true,
+  },
+  {
+    field: "condition",
+    headerName: "Condition",
+    // flex: 1,
+    editable: true,
+  },
+  {
     field: "supervisor_instruction",
     headerName: "Supervisor Instruction",
     // flex: 1,

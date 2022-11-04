@@ -57,12 +57,12 @@ import { useGetAllPublicQuery } from "@/store/projects";
  *
  * @param {[[number,number],[number,number]]} coordinates
  */
-function eucledian([[lon1, lat1], [lon2, lat2]]) {
+function eucledian([[lat1, lon1], [lat2, lon2]]) {
   console.log([
     [lon1, lat1],
     [lon2, lat2],
   ]);
-  return Math.sqrt((lon2 - lon1) ** 2 + (lat2 - lat1) ** 2);
+  return Math.sqrt(((lat1 - lat2) ** 2 + (lon1 - lon2) ** 2) + 111.319);
 }
 /**
  *
