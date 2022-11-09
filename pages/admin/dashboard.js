@@ -135,6 +135,10 @@ export default function Dashboard(props) {
   const [list_message, set_list_message] = useState("");
   const [selected_sub_district, set_selected_sub_district] = useState("");
 
+  const is_root = user.account.role == "root";
+  const is_admin = user.account.role == "admin";
+  const is_supervisor = user.account.role == "supervisor";
+
   let project_status_filter = ".*";
   let project_status = "All";
   let projects = [];
@@ -171,51 +175,53 @@ export default function Dashboard(props) {
     });
   }, []);
   useEffect(() => {
-    let client_sse = get_client_sse();
-    if (!client_sse) {
-      client_sse = set_client_sse(
-        new EventSource(`/api/v1/models/system?authc=${user.token}`)
-      );
-    }
-    if (client_sse.readyState == EventSource.CLOSED) {
-      client_sse = set_client_sse(
-        new EventSource(`/api/v1/models/system?authc=${user.token}`)
-      );
-    }
-    client_sse.addEventListener("message", (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setSystem(data);
+    if (is_root) {
+      let client_sse = get_client_sse();
+      if (!client_sse) {
+        client_sse = set_client_sse(
+          new EventSource(`/api/v1/models/system?token=${user.token}`)
+        );
+      }
+      if (client_sse.readyState == EventSource.CLOSED) {
+        client_sse = set_client_sse(
+          new EventSource(`/api/v1/models/system?token=${user.token}`)
+        );
+      }
+      client_sse.addEventListener("message", (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          setSystem(data);
+          set_is_loading_system(false);
+          set_is_success_system(true);
+        } catch (error) {
+          setSnack({
+            ...snack,
+            open: true,
+            message: (
+              <Alert elevation={6} severity="error">
+                {error.message}
+              </Alert>
+            ),
+          });
+        }
+      });
+      client_sse.addEventListener("error", (event) => {
+        console.error(event);
         set_is_loading_system(false);
-        set_is_success_system(true);
-      } catch (error) {
         setSnack({
           ...snack,
           open: true,
           message: (
             <Alert elevation={6} severity="error">
-              {error.message}
+              Something Wrong
             </Alert>
           ),
         });
-      }
-    });
-    client_sse.addEventListener("error", (event) => {
-      console.error(event);
-      set_is_loading_system(false);
-      setSnack({
-        ...snack,
-        open: true,
-        message: (
-          <Alert elevation={6} severity="error">
-            Something Wrong
-          </Alert>
-        ),
       });
-    });
-    router.events.on("routeChangeStart", () => {
-      client_sse.close();
-    });
+      router.events.on("routeChangeStart", () => {
+        client_sse.close();
+      });
+    }
   }, []);
   useEffect(() => {
     ctx_admin.set_loader(is_fetching_stat);
