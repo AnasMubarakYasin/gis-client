@@ -57,12 +57,10 @@ import { useGetAllPublicQuery } from "@/store/projects";
  *
  * @param {[[number,number],[number,number]]} coordinates
  */
-function eucledian([[lat1, lon1], [lat2, lon2]]) {
-  console.log([
-    [lon1, lat1],
-    [lon2, lat2],
-  ]);
-  return Math.sqrt(((lat1 - lat2) ** 2 + (lon1 - lon2) ** 2)) + 111.319;
+function eucledian([[lon1, lat1], [lon2, lat2]]) {
+  return (
+    Math.sqrt(Math.pow(lat1 - lat2, 2) + Math.pow(lon1 - lon2, 2)) * 111.319
+  );
 }
 /**
  *
@@ -150,6 +148,7 @@ export default function Distance(props) {
   }, [have_map, theme.palette.mode]);
 
   function handle_select() {
+    console.log(coordinates);
     // @ts-ignore
     // set_distance(spherical(coordinates) + " km");
     set_distance(eucledian(coordinates) + " km");
