@@ -62,7 +62,7 @@ function eucledian([[lat1, lon1], [lat2, lon2]]) {
     [lon1, lat1],
     [lon2, lat2],
   ]);
-  return Math.sqrt(((lat1 - lat2) ** 2 + (lon1 - lon2) ** 2) + 111.319);
+  return Math.sqrt(((lat1 - lat2) ** 2 + (lon1 - lon2) ** 2)) + 111.319;
 }
 /**
  *
